@@ -1,0 +1,86 @@
+{
+  "nav": {
+    "home": "Home",
+    "blog": "Blog",
+    "analytics": "Data Analytics",
+    "contact": "Contact"
+  },
+  "home": {
+    "heroBadge": "F1 Data Analyst",
+    "heroTitle": "See Formula 1 through a data-driven lens",
+    "heroSubtitle": "Articles, analysis and race statistics — where passion for speed meets the power of data",
+    "ctaBlog": "Read the Blog",
+    "ctaAnalytics": "Data Analytics",
+    "featuredTitle": "Latest Articles",
+    "featuredAll": "View all",
+    "aboutTitle": "About Amir Formula",
+    "aboutText": "Hi! I'm Amir — an F1 and data enthusiast. Here I share race experiences, analysis and technical insights from the world of F1 — from pit-stop strategy to telemetry fine details.",
+    "telegramCta": "Join Telegram Channel"
+  },
+  "blog": {
+    "title": "Blog",
+    "subtitle": "All articles about Formula 1",
+    "readMore": "Read more",
+    "empty": "No articles published yet",
+    "searchPlaceholder": "Search articles...",
+    "backToBlog": "Back to blog",
+    "notFound": "Article not found",
+    "views": "views",
+    "tags": "Tags",
+    "taggedWith": "Tagged with",
+    "sharePost": "Share"
+  },
+  "comments": {
+    "title": "Comments",
+    "empty": "Be the first to comment!",
+    "formTitle": "Leave a comment",
+    "namePlaceholder": "Your name",
+    "commentPlaceholder": "Your comment...",
+    "submit": "Post comment",
+    "sending": "Sending...",
+    "submitted": "Your comment was submitted and will appear after approval.",
+    "error": "Failed to submit. Please try again."
+  },
+  "likes": {
+    "like": "Like"
+  },
+  "search": {
+    "placeholder": "Search articles...",
+    "noResults": "No results found",
+    "searching": "Searching...",
+    "hint": "Type to search",
+    "navigate": "navigate",
+    "select": "select",
+    "close": "close"
+  },
+  "analytics": {
+    "badge": "Coming Soon",
+    "title": "Data Analytics Hub",
+    "subtitle": "We're preparing deep data-driven analyses of the Formula 1 world: interactive charts, driver comparisons, race strategy breakdowns, and much more.",
+    "featuresTitle": "What's coming?",
+    "f1": "Fastest lap & telemetry analysis",
+    "f2": "Driver and team performance comparisons",
+    "f3": "Interactive race result charts",
+    "f4": "Championship predictions & modeling",
+    "followUs": "For daily analyses, follow our Telegram channel meanwhile:",
+    "telegramBtn": "Amir Formula on Telegram"
+  },
+  "contact": {
+    "title": "Contact Me",
+    "subtitle": "Have a question, a suggestion for analysis, or just want to talk F1? I'd love to hear from you.",
+    "name": "Your name",
+    "email": "Email",
+    "subject": "Subject",
+    "message": "Your message",
+    "send": "Send message",
+    "sending": "Sending...",
+    "success": "Message sent successfully. I'll reply soon!",
+    "error": "Failed to send. Please try again or reach out on Telegram."
+  },
+  "footer": {
+    "blog": "Blog",
+    "analytics": "Data Analytics",
+    "contact": "Contact",
+    "rights": "All rights reserved."
+  }
+}

@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #ffc71f;
+  --color-navy: #1b2a4a;
+}
+
+body {
+  @apply bg-white text-navy antialiased;
+}
+
+html[lang="fa"] body {
+  font-family: var(--font-vazirmatn), Tahoma, sans-serif;
+}
+
+html[lang="en"] body {
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+/* Markdown content styles */
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3 {
+  @apply mt-8 mb-4 font-bold text-navy;
+}
+.markdown-body h1 { @apply text-3xl; }
+.markdown-body h2 { @apply text-2xl; }
+.markdown-body h3 { @apply text-xl; }
+
+.markdown-body p {
+  @apply mb-4 leading-relaxed text-body;
+}
+
+.markdown-body a {
+  @apply text-primary-hover underline underline-offset-4 hover:text-primary;
+}
+
+.markdown-body img {
+  @apply my-6 rounded-lg;
+}
+
+.markdown-body ul { @apply mb-4 list-disc space-y-2 ps-6; }
+.markdown-body ol { @apply mb-4 list-decimal space-y-2 ps-6; }
+
+.markdown-body blockquote {
+  @apply my-4 border-s-4 border-primary bg-silver/20 px-4 py-2 italic;
+}
+
+.markdown-body code {
+  @apply rounded bg-silver/30 px-1.5 py-0.5 text-sm;
+  direction: ltr;
+  display: inline-block;
+}
+
+.markdown-body pre {
+  @apply my-4 overflow-x-auto rounded-lg bg-navy p-4 text-white;
+  direction: ltr;
+  text-align: left;
+}
+
+.markdown-body pre code {
+  @apply bg-transparent p-0 text-inherit;
+}
+
+.markdown-body table {
+  @apply my-4 w-full border-collapse;
+}
+.markdown-body th {
+  @apply border border-silver bg-navy-light px-3 py-2 text-white;
+}
+.markdown-body td {
+  @apply border border-silver px-3 py-2;
+}
+
+/* md-editor dark tweaks */
+.w-md-editor {
+  --md-bk-color: #f8f9fb !important;
+}
+
+/* Checkered flag strip under hero */
+.checkered-strip {
+  height: 14px;
+  background-image: conic-gradient(
+    #fff 90deg,
+    #1b2a4a 90deg 180deg,
+    #fff 180deg 270deg,
+    #1b2a4a 270deg
+  );
+  background-size: 28px 28px;
+}
