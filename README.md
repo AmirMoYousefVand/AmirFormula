@@ -1,5 +1,3 @@
-<div dir="rtl">
-
 # Amir Formula — وبلاگ شخصی فرمول ۱
 
 وب‌سایت دوزبانه (فارسی/انگلیسی) با پنل مدیریت کامل، ساخته‌شده با Next.js 15 + Supabase.
@@ -181,5 +179,3 @@ supabase/schema.sql        # اسکیمای دیتابیس + RLS
 - **Formspree رایگان**: ۵۰ پیام در ماه
 - برای تغییر رنگ‌ها: [tailwind.config.ts](tailwind.config.ts)
 - برای تغییر متن‌ها: [messages/fa.json](messages/fa.json) و [messages/en.json](messages/en.json)
-
-</div>
