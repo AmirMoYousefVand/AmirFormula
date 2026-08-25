@@ -141,7 +141,7 @@ export async function getApprovedComments(postId: string) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("comments")
-    .select("id, author_name, content, created_at")
+    .select("id, parent_id, author_name, content, created_at")
     .eq("post_id", postId)
     .eq("status", "approved")
     .order("created_at", { ascending: true });

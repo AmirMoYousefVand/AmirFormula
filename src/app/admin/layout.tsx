@@ -1,6 +1,19 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { Vazirmatn, Inter } from "next/font/google";
 import "../globals.css";
+
+const vazirmatn = Vazirmatn({
+  subsets: ["arabic", "latin"],
+  variable: "--font-vazirmatn",
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata = {
   title: "پنل مدیریت | Amir Formula",
@@ -17,16 +30,9 @@ export default async function AdminLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Login page has its own minimal layout via route group
-  if (!user) {
-    // Let /admin/login render its own page; layout guard applies to others
-    // We can't easily know pathname in a layout, so middleware handles redirect.
-    // Here we only fetch user; pages themselves re-verify.
-  }
-
   return (
     <html lang="fa" dir="rtl">
-      <body className="min-h-screen bg-slate-50">{children}</body>
+      <body className={`${vazirmatn.variable} ${inter.variable} min-h-screen bg-slate-50`}>{children}</body>
     </html>
   );
 }

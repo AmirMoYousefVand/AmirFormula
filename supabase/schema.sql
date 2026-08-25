@@ -60,6 +60,8 @@ create table if not exists public.posts (
   published_at timestamptz,
   view_count integer not null default 0,
   like_count integer not null default 0,
+  meta_description text,
+  meta_keywords text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -129,7 +131,9 @@ create policy "post_tags_write_admin" on public.post_tags
 create table if not exists public.comments (
   id uuid primary key default gen_random_uuid(),
   post_id uuid not null references public.posts(id) on delete cascade,
+  parent_id uuid references public.comments(id) on delete cascade,
   author_name text not null check (char_length(author_name) between 2 and 80),
+  author_fingerprint text not null,
   content text not null check (char_length(content) between 2 and 2000),
   status text not null default 'pending' check (status in ('pending','approved')),
   created_at timestamptz not null default now()

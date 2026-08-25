@@ -3,7 +3,8 @@
 import { useActionState, useState } from "react";
 import { savePostAction } from "@/actions/posts";
 import type { Post, Tag } from "@/lib/supabase/database.types";
-import MarkdownEditor from "./MarkdownEditor";
+import RichTextEditor from "./RichTextEditor";
+import CoverImageUpload from "./CoverImageUpload";
 
 type Props = {
   post?: Post | null;
@@ -131,9 +132,9 @@ export default function PostForm({ post, tags, selectedTagIds }: Props) {
             </div>
 
             {activeTab === "fa" ? (
-              <MarkdownEditor value={contentFa} onChange={setContentFa} />
+              <RichTextEditor value={contentFa} onChange={setContentFa} />
             ) : (
-              <MarkdownEditor value={contentEn} onChange={setContentEn} dir="ltr" />
+              <RichTextEditor value={contentEn} onChange={setContentEn} dir="ltr" />
             )}
           </div>
         </div>
@@ -179,20 +180,33 @@ export default function PostForm({ post, tags, selectedTagIds }: Props) {
             />
           </div>
 
+          <CoverImageUpload initialUrl={post?.cover_image_url || ""} />
+
+          {/* SEO Section */}
           <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-silver/40">
-            <label className="mb-1 block text-sm font-bold text-navy">
-              لینک تصویر کاور
+            <h3 className="mb-3 text-sm font-bold text-navy border-b border-silver/30 pb-2">سئو و متادیتا</h3>
+
+            <label className="mb-1 block text-xs font-bold text-navy">
+              Meta Description
+            </label>
+            <textarea
+              name="meta_description"
+              defaultValue={post?.meta_description || ""}
+              rows={2}
+              maxLength={300}
+              placeholder="توضیح کوتاه برای نمایش در گوگل..."
+              className="mb-3 w-full resize-y rounded-lg border border-silver/50 px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+
+            <label className="mb-1 block text-xs font-bold text-navy">
+              Meta Keywords
             </label>
             <input
-              name="cover_image_url"
-              defaultValue={post?.cover_image_url || ""}
-              dir="ltr"
-              placeholder="https://..."
+              name="meta_keywords"
+              defaultValue={post?.meta_keywords || ""}
+              placeholder="فرمول 1, مرسدس, ردبول, تحلیل"
               className="w-full rounded-lg border border-silver/50 px-3 py-2 text-sm outline-none focus:border-primary"
             />
-            <p className="mt-2 text-xs text-body">
-              آدرس تصویر آپلودشده در Supabase Storage (باکت covers)
-            </p>
           </div>
 
           <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-silver/40">

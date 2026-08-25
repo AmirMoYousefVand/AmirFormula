@@ -27,9 +27,11 @@ export async function generateMetadata({
 
   return {
     title: localizedTitle(post, locale),
-    description: localizedExcerpt(post, locale) || undefined,
+    description: post.meta_description || localizedExcerpt(post, locale) || undefined,
+    keywords: post.meta_keywords || undefined,
     openGraph: {
       title: localizedTitle(post, locale),
+      description: post.meta_description || localizedExcerpt(post, locale) || undefined,
       images: post.cover_image_url ? [post.cover_image_url] : undefined,
     },
   };

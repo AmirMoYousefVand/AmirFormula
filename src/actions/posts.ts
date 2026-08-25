@@ -26,6 +26,8 @@ export async function savePostAction(
     content_en: String(formData.get("content_en") || ""),
     cover_image_url: String(formData.get("cover_image_url") || ""),
     published_at: String(formData.get("published_at") || ""),
+    meta_description: String(formData.get("meta_description") || ""),
+    meta_keywords: String(formData.get("meta_keywords") || ""),
     tag_ids: JSON.parse(String(formData.get("tag_ids") || "[]")),
   };
 

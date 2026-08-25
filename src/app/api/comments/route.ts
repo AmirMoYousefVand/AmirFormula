@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { slug, author_name, content } = parsed.data;
+  const { slug, author_name, author_fingerprint, content, parent_id } = parsed.data;
   const supabase = await createClient();
 
   // Resolve slug → post id (only for publicly visible posts)
@@ -43,10 +43,37 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Post not found" }, { status: 404 });
   }
 
+  // Identity verification to prevent spoofing:
+  // 1. Has this fingerprint used a different name?
+  const { data: fpUsedName } = await supabase
+    .from("comments")
+    .select("author_name")
+    .eq("author_fingerprint", author_fingerprint)
+    .limit(1)
+    .maybeSingle();
+
+  if (fpUsedName && fpUsedName.author_name !== author_name) {
+    return NextResponse.json({ error: `شما قبلا با نام '${fpUsedName.author_name}' کامنت گذاشته‌اید. از همان نام استفاده کنید.` }, { status: 403 });
+  }
+
+  // 2. Has this name been used by a different fingerprint?
+  const { data: nameUsedFp } = await supabase
+    .from("comments")
+    .select("author_fingerprint")
+    .eq("author_name", author_name)
+    .limit(1)
+    .maybeSingle();
+
+  if (nameUsedFp && nameUsedFp.author_fingerprint !== author_fingerprint) {
+    return NextResponse.json({ error: "این نام قبلا توسط شخص دیگری استفاده شده است." }, { status: 403 });
+  }
+
   // Insert as pending — RLS enforces status='pending' for anon
   const { error } = await supabase.from("comments").insert({
     post_id: post.id,
+    parent_id: parent_id || null,
     author_name,
+    author_fingerprint,
     content,
   });
 

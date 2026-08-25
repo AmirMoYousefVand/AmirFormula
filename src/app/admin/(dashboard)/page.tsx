@@ -6,21 +6,22 @@ export default async function AdminDashboardPage() {
   const supabase = await createClient();
 
   // Parallel queries for stats
-  const [postsRes, commentsRes, viewsRes] = await Promise.all([
-    supabase.from("posts").select("id, status, view_count, title_fa, slug, published_at"),
+  const [postsRes, commentsRes, topPostsRes] = await Promise.all([
+    supabase.from("posts").select("id, status, view_count, like_count, title_fa, slug, published_at"),
     supabase
       .from("comments")
       .select("id, status, author_name, content, created_at, posts(title_fa, slug)"),
-    supabase.from("posts").select("view_count"),
+    supabase.from("posts").select("title_fa, view_count, like_count, slug").order("view_count", { ascending: false }).limit(5)
   ]);
 
   const posts = postsRes.data || [];
+  const topPosts = topPostsRes.data || [];
   const stats = {
     total: posts.length,
     published: posts.filter((p) => p.status === "published").length,
     draft: posts.filter((p) => p.status === "draft").length,
     scheduled: posts.filter((p) => p.status === "scheduled").length,
-    totalViews: (viewsRes.data || []).reduce((s, p) => s + p.view_count, 0),
+    totalViews: posts.reduce((s, p) => s + p.view_count, 0),
   };
 
   const allComments = commentsRes.data || [];
@@ -58,6 +59,26 @@ export default async function AdminDashboardPage() {
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        {/* Top Posts */}
+        <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-silver/40 lg:col-span-2">
+          <h2 className="mb-4 font-bold text-navy">مقاله‌های پربازدید</h2>
+          {topPosts.length === 0 ? (
+            <p className="py-6 text-center text-sm text-body">مقاله‌ای وجود ندارد</p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {topPosts.map((p) => (
+                <Link key={p.slug} href={`/fa/blog/${p.slug}`} target="_blank" className="flex flex-col rounded-lg bg-silver/10 p-4 transition-colors hover:bg-silver/20">
+                  <span className="font-bold text-navy line-clamp-1">{p.title_fa}</span>
+                  <div className="mt-2 flex items-center gap-4 text-xs text-body">
+                    <span className="flex items-center gap-1">👁 {formatNumber(p.view_count, "fa")}</span>
+                    <span className="flex items-center gap-1">❤️ {formatNumber(p.like_count, "fa")}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+
         {/* Pending comments */}
         <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-silver/40">
           <div className="mb-4 flex items-center justify-between">

@@ -50,6 +50,8 @@ export type Database = {
           published_at: string | null;
           view_count: number;
           like_count: number;
+          meta_description: string | null;
+          meta_keywords: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -68,6 +70,8 @@ export type Database = {
           published_at?: string | null;
           view_count?: number;
           like_count?: number;
+          meta_description?: string | null;
+          meta_keywords?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -86,6 +90,8 @@ export type Database = {
           published_at?: string | null;
           view_count?: number;
           like_count?: number;
+          meta_description?: string | null;
+          meta_keywords?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -134,7 +140,9 @@ export type Database = {
         Row: {
           id: string;
           post_id: string;
+          parent_id: string | null;
           author_name: string;
+          author_fingerprint: string;
           content: string;
           status: "pending" | "approved";
           created_at: string;
@@ -142,7 +150,9 @@ export type Database = {
         Insert: {
           id?: string;
           post_id: string;
+          parent_id?: string | null;
           author_name: string;
+          author_fingerprint: string;
           content: string;
           status?: "pending" | "approved";
           created_at?: string;
@@ -150,7 +160,9 @@ export type Database = {
         Update: {
           id?: string;
           post_id?: string;
+          parent_id?: string | null;
           author_name?: string;
+          author_fingerprint?: string;
           content?: string;
           status?: "pending" | "approved";
           created_at?: string;
