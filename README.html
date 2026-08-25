@@ -231,14 +231,14 @@
 </ol>
 
 <h3>۲. اجرای ساختار دیتابیس</h3>
-<p>در داشبورد Supabase برو به <strong>SQL Editor</strong> و <strong>دو مرحله</strong> را جداگانه اجرا کن:</p>
+<p>در داشبورد Supabase برو به <strong>SQL Editor</strong> یک کادر جدید باز کنید و <strong>دو مرحله</strong> را جداگانه اجرا کن:</p>
 <ol>
-  <li><strong>مرحله ۱:</strong> محتوای فایل <code>supabase/schema.sql</code> را کپی و <strong>Run</strong> کن (جداول + RLS + توابع)</li>
-  <li><strong>مرحله ۲:</strong> محتوای فایل <code>supabase/triggers.sql</code> را کپی و <strong>Run</strong> کن (توابع trigger)</li>
+  <li><strong>مرحله ۱:</strong> محتوای فایل <code>supabase/schema.sql</code> را کپی و <strong>Run</strong> کن (جداول + RLS + توابع). منتظر بمانید تا پیغام <code>Success</code> نمایش داده شود.</li>
+  <li><strong>مرحله ۲:</strong> حالا تمام متن‌های قبلی را پاک کنید، محتوای فایل <code>supabase/triggers.sql</code> را کپی و <strong>Run</strong> کن (توابع trigger)</li>
   <li>در <strong>Storage → New Bucket</strong>: نام <code>covers</code> + فعال کردن <strong>Public bucket</strong></li>
 </ol>
 <div class="note">
-  ⚠️ توابع trigger باید در یک اجرای جداگانه اجرا شوند — در غیر این صورت خطای <code>42P13</code> رخ می‌دهد.
+  ⚠️ توابع trigger باید در یک اجرای جداگانه اجرا شوند — در غیر این صورت خطای <code>42P13</code> رخ می‌دهد. همچنین اگر این دو مرحله جداگانه انجام نشوند، موقع ساخت یوزر به ارور <code>Database error creating new user</code> برمی‌خورید.
 </div>
 
 <h3>۳. اتصال کدهای سایت به دیتابیس</h3>
@@ -261,7 +261,7 @@ NEXT_PUBLIC_FORMSPREE_ID=</code></pre>
 <ol>
   <li>در Supabase به بخش <strong>Authentication</strong> (آیکون آدمک) بروید.</li>
   <li>روی <strong>Add user</strong> و سپس <strong>Create new user</strong> کلیک کنید.</li>
-  <li>ایمیل و رمزی که می‌خواهید با آن وارد پنل مدیریت سایت شوید را وارد کرده و تیک <code>Auto Confirm User</code> را بزنید.</li>
+  <li>ایمیل و رمزی که می‌خواهید با آن وارد پنل مدیریت سایت شوید را وارد کرده و تیک <code>Auto Confirm User</code> را بزنید. (اگر در این مرحله ارور گرفتید، یعنی مرحله ۲ را درست اجرا نکرده‌اید).</li>
   <li>حالا دوباره به <strong>SQL Editor</strong> بروید و این یک خط کد را اجرا کنید (ایمیل خودتان را جایگزین کنید):</li>
 </ol>
 <pre><code>update public.profiles set role = 'superadmin' where email = 'ایمیل-شما@example.com';</code></pre>

@@ -24,127 +24,99 @@
 | چندزبانه | next-intl |
 | ادیتور | @uiw/react-md-editor |
 
-## راه‌اندازی (گام به گام)
+---
 
-### 1. نصب
+## 🚀 راهنمای نصب صفر تا صد (کاملاً رایگان)
 
-```bash
-npm install
-```
+این راهنما برای کسانی نوشته شده که می‌خواهند بدون دانش قبلی، سایت را روی کامپیوتر خود اجرا کرده و سپس روی اینترنت (هاست رایگان) قرار دهند.
 
-### 2. ساخت پروژه Supabase (رایگان)
-
-1. برو به [supabase.com](https://supabase.com) و حساب بساز (رایگان)
-2. **New Project** بزن — اسم: `amir-formula`، رمز دیتابیس رو جایی ذخیره کن
-3. بعد از ساخت پروژه، از **Project Settings → API** این دو مقدار رو کپی کن:
+### مرحله ۱: ساخت دیتابیس (Supabase)
+ما به یک دیتابیس رایگان نیاز داریم تا مقالات و تنظیمات در آن ذخیره شوند.
+1. به سایت [Supabase.com](https://supabase.com) بروید و ثبت‌نام کنید.
+2. دکمه **New Project** را بزنید. نام پروژه را `amir-formula` بگذارید و یک رمز عبور قوی وارد کنید (این رمز را حتماً جایی یادداشت کنید).
+3. وقتی پروژه ساخته شد، از منوی تنظیمات (چرخ‌دنده) به بخش **API** بروید.
+4. در اینجا دو مقدار مهم وجود دارد که باید کپی کنید:
    - `Project URL`
    - `anon public` key
+   - `service_role` key (در قسمت پایین‌تر صفحه است)
 
-### 3. اجرای اسکیما
+### مرحله ۲: اجرای ساختار دیتابیس
+حالا باید جداول مقالات و نظرات را در دیتابیس بسازیم.
+1. در داشبورد Supabase، از منوی سمت چپ به بخش **SQL Editor** بروید. یک کادر جدید باز کنید (New Query).
+2. **مرحله ۱:** کل محتوای فایل `supabase/schema.sql` (در پوشه پروژه خودتان) را کپی کرده، در ویرایشگر Supabase پیست کنید و دکمه **Run** را بزنید. منتظر بمانید تا پیغام `Success` نمایش داده شود.
+3. **مرحله ۲:** حالا تمام متن‌های قبلی را پاک کنید، محتوای فایل `supabase/triggers.sql` را کپی کرده و **Run** کنید. 
+**(نکته بسیار مهم: اگر این دو مرحله را جداگانه اجرا نکنید، یا مرحله ۱ با خطا مواجه شده باشد، در زمان ساخت یوزر با ارور Database error creating new user مواجه می‌شوید).**
+4. برای اینکه عکس مقالات کار کند، از منوی سمت چپ به بخش **Storage** بروید، دکمه **New Bucket** را بزنید، نام آن را `covers` بگذارید و حتماً تیک **Public bucket** را روشن کنید.
 
-در داشبورد Supabase برو به **SQL Editor** و **دو مرحله** را جداگانه اجرا کن:
-
-1. **مرحله ۱:** محتوای فایل `supabase/schema.sql` رو کپی و **Run** کن (جداول + RLS + توابع)
-2. **مرحله ۲:** محتوای فایل `supabase/triggers.sql` رو کپی و **Run** کن (توابع trigger)
-3. حالا در **Storage → New Bucket**:
-   - نام: `covers`
-   - گزینه **Public bucket** رو فعال کن
-   - Create بزن
-
-> **نکته:** توابع trigger باید حتماً در یک اجرای جداگانه اجرا شوند، در غیر این صورت با خطای `42P13` در Supabase مواجه می‌شوید.
-
-### 4. ساخت اکانت ادمین (سوپرادمین)
-
-1. در Supabase برو به **Authentication → Users → Add user → Create new user**
-2. ایمیل و رمز عبور دلخواه بزن، **Auto Confirm User** رو هم فعال کن
-3. حالا در **SQL Editor** اجرا کن:
-
-```sql
-update public.profiles set role = 'superadmin' where email = 'ایمیل-شما@example.com';
-```
-
-### 5. تنظیم Environment Variables
-
-فایل `.env.local` رو پر کن:
+### مرحله ۳: اتصال کدهای سایت به دیتابیس
+سایت شما باید کدهایی که در مرحله ۱ کپی کردید را بشناسد.
+1. در پوشه اصلی پروژه خود (`Web Blog`)، فایلی به نام `.env.local` وجود دارد (اگر نیست، فایلی دقیقاً با همین نام بسازید).
+2. آن را با یک ادیتور ساده باز کنید و کلیدهای خود را به این شکل در آن قرار دهید:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...        # از Settings → API → service_role
-CRON_SECRET=یک-رشته-تصادفی              # مثلاً: openssl rand -hex 32
-NEXT_PUBLIC_FORMSPREE_ID=               # فعلاً خالی، بعداً پر می‌کنیم
+NEXT_PUBLIC_SUPABASE_URL=آدرس_پروژه_شما_در_سوپابیس
+NEXT_PUBLIC_SUPABASE_ANON_KEY=کد_آنون_پابلیک_شما
+SUPABASE_SERVICE_ROLE_KEY=کد_سرویس_رول_شما
+
+CRON_SECRET=my-secret-amir-f1-password-1234
+NEXT_PUBLIC_FORMSPREE_ID=
 ```
+*(نکته: جلوی `CRON_SECRET` یک رمز انگلیسی سخت به دلخواه خودتان بنویسید. این رمز برای امنیت انتشار خودکار مقالات است).*
 
-### 6. اجرا
+### مرحله ۴: ساخت اکانت مدیر کل (ادمین)
+1. در Supabase به بخش **Authentication** (آیکون آدمک) بروید.
+2. روی **Add user** و سپس **Create new user** کلیک کنید.
+3. ایمیل و رمزی که می‌خواهید با آن وارد پنل مدیریت سایت شوید را وارد کرده و تیک `Auto Confirm User` را بزنید. (اگر در این مرحله ارور گرفتید، یعنی مرحله ۲ را درست اجرا نکرده‌اید).
+4. حالا دوباره به **SQL Editor** بروید و این یک خط کد را اجرا کنید (ایمیل خودتان را جایگزین کنید):
+   ```sql
+   update public.profiles set role = 'superadmin' where email = 'ایمیل-شما@example.com';
+   ```
 
-```bash
-npm run dev
-```
-
-سایت: `http://localhost:3000/fa`
-پنل مدیریت: `http://localhost:3000/admin`
+### مرحله ۵: اجرای سایت روی کامپیوتر
+1. در پوشه پروژه، کلیک راست کرده و Terminal (یا CMD) را باز کنید.
+2. دستورات زیر را به ترتیب بزنید:
+   ```bash
+   npm install
+   npm run dev
+   ```
+3. مرورگر را باز کرده و به آدرس `http://localhost:3000` بروید. سایت شما آماده است!
+4. برای ورود به پنل مدیریت به آدرس `http://localhost:3000/admin` بروید و با ایمیل و رمزی که در مرحله ۴ ساختید وارد شوید.
 
 ---
 
-## فرم تماس (Formspree — رایگان)
+## ☁️ بردن سایت روی اینترنت (هاست رایگان Vercel)
 
-1. برو به [formspree.io](https://formspree.io) و با گیت‌هاب ثبت‌نام کن (رایگان — 50 پیام/ماه)
-2. **New form** بساز — ایمیلت رو وارد کن
-3. Form ID رو کپی کن (مثل `xaybzwqp`) و داخل `.env.local` بذار:
+برای اینکه سایتتان برای همه دنیا قابل دسترسی باشد، از هاست قدرتمند و رایگان Vercel استفاده می‌کنیم.
 
-```env
-NEXT_PUBLIC_FORMSPREE_ID=xaybzwqp
-```
+### ۱. ذخیره کدها در Github
+1. در سایت [Github.com](https://github.com) اکانت بسازید.
+2. دکمه **New Repository** را بزنید، نامش را `amir-formula-blog` بگذارید و Create کنید.
+3. در ترمینال کامپیوتر خودتان، این دستورات را بزنید (آدرس مخزن خودتان را در خط چهارم جایگزین کنید):
+   ```bash
+   git add .
+   git commit -m "First upload"
+   git branch -M main
+   git remote add origin https://github.com/نام-شما/amir-formula-blog.git
+   git push -u origin main
+   ```
 
----
+### ۲. اتصال به Vercel
+1. به سایت [Vercel.com](https://vercel.com) بروید و با اکانت Github خود لاگین کنید.
+2. دکمه **Add New → Project** را بزنید.
+3. مخزن گیت‌هاب خود (`amir-formula-blog`) را می‌بینید؛ دکمه **Import** را بزنید.
+4. **بسیار مهم:** قبل از زدن دکمه Deploy، بخش **Environment Variables** را باز کنید.
+5. هر ۵ موردی که در فایل `.env.local` وارد کرده بودید را اینجا دانه دانه کپی و **Add** کنید (Name در کادر اول، مقدار در کادر دوم).
+6. حالا دکمه **Deploy** را بزنید!
 
-## دیپلوی روی Vercel (رایگان)
-
-### 1. کد را به GitHub بفرست
-
-```bash
-git init && git add . && git commit -m "Amir Formula blog"
-git remote add origin https://github.com/YOUR_USERNAME/amir-formula.git
-git push -u origin main
-```
-
-### 2. Import در Vercel
-
-1. برو به [vercel.com](https://vercel.com) و با گیت‌هاب لاگین کن
-2. **Add New → Project** → ریپو رو انتخاب کن
-3. در قسمت **Environment Variables** هر ۵ مقدار از `.env.local` رو دستی وارد کن
-4. **Deploy** بزن — تمام!
-
-### 3. Cron (انتشار خودکار مقالات زمان‌دار)
-
-فایل `vercel.json` از قبل تنظیم شده — هر روز ساعت ۳ بامداد مقالات زمان‌داره منتشر می‌شن.
-(نکته: حتی بدون cron هم مقاله دقیقاً سر ساعتش نمایش داده می‌شه؛ cron فقط وضعیت داشبورد رو به‌روز می‌کنه و مانع pause شدن رایگان Supabase می‌شه.)
+بعد از حدود ۲ دقیقه، Vercel یک لینک اختصاصی (مانند `amir-formula.vercel.app`) به شما می‌دهد که سایت شما روی اینترنت است!
 
 ---
 
-## استفاده از پنل مدیریت
-
-مسیر: `/admin`
-
-| بخش | توضیح |
-|-----|-------|
-| **داشبورد** | آمار کلی: تعداد مقالات، بازدیدها، نظرات در انتظار |
-| **مقالات** | نوشتن با Markdown + پیش‌نمایش زنده، پیش‌نویس/زمان‌بندی/انتشار |
-| **نظرات** | تأیید یا حذف نظرات کاربران |
-| **برچسب‌ها** | ساخت برچسب دوزبانه برای دسته‌بندی مقالات |
-| **مدیران** | (فقط سوپرادمین) دعوت ادیتور با ایمیل، تغییر نقش، حذف |
-
-## نقش‌ها
-
-- **superadmin**: دسترسی کامل + مدیریت سایر مدیران
-- **editor**: نوشتن مقاله، مدیریت نظرات و برچسب‌ها (بدون دسترسی به بخش مدیران)
-
-## آپلود تصویر مقالات
-
-1. در Supabase برو به **Storage → covers**
-2. عکس رو Upload کن
-3. روی فایل کلیک کن → **Get URL** → لینک public رو کپی کن
-4. در فرم مقاله، قسمت «لینک تصویر کاور» بچسبون
+## ✉️ راه‌اندازی فرم تماس با ما (اختیاری)
+1. در سایت [formspree.io](https://formspree.io) ثبت‌نام کنید (۵۰ پیام در ماه رایگان است).
+2. یک فرم جدید (`New form`) بسازید و ایمیل خود را وارد کنید.
+3. به شما یک آیدی ۸ حرفی (مثل `xaybzwqp`) می‌دهد.
+4. آن آیدی را در پنل Vercel (بخش Settings → Environment Variables) در متغیر `NEXT_PUBLIC_FORMSPREE_ID` ذخیره کنید تا فرم تماس سایت کار کند.
 
 ## ساختار پروژه
 
@@ -175,7 +147,8 @@ supabase/schema.sql        # اسکیمای دیتابیس + RLS
 - ✅ اعتبارسنجی Zod روی همه ورودی‌ها
 - ✅ CSRF محافظت‌شده با Server Actions
 - ✅ Honeypot ضد اسپم در فرم‌های عمومی
-- ✅ محافظت endpoint کرن با Bearer token
+- ✅ محافظت endpoint کرن با Bearer token. Code explicitly checks if `process.env.CRON_SECRET` exists first, mitigating attacks where an undefined secret makes an expected header of `"Bearer undefined"`.
+- ✅ Rate limiting consideration for comments/likes (can add Upstash later if needed)
 
 ## نکات مهم
 
