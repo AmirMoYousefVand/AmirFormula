@@ -45,7 +45,7 @@ create policy "profiles_delete_super" on public.profiles
 -- ساخت خودکار پروفایل هنگام ثبت‌نام در Auth
 create or replace function public.handle_new_user()
 returns trigger
-language sql security definer set search_path = public
+language sql security definer
 as $$
   insert into public.profiles (id, email, full_name)
   values (
@@ -193,7 +193,7 @@ create policy "likes_read_public" on public.likes
 -- ============ شمارنده بازدید (اتمیک) ============
 create or replace function public.increment_post_views(p_slug text)
 returns void
-language plpgsql security definer set search_path = public
+language plpgsql security definer
 as $$
 begin
   update public.posts set view_count = view_count + 1 where slug = p_slug;
