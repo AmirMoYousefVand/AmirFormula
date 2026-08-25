@@ -230,7 +230,7 @@
   </li>
 </ol>
 
-<h3>۳. اجرای اسکیما</h3>
+<h3>۲. اجرای ساختار دیتابیس</h3>
 <p>در داشبورد Supabase برو به <strong>SQL Editor</strong> و <strong>دو مرحله</strong> را جداگانه اجرا کن:</p>
 <ol>
   <li><strong>مرحله ۱:</strong> محتوای فایل <code>supabase/schema.sql</code> را کپی و <strong>Run</strong> کن (جداول + RLS + توابع)</li>
@@ -241,57 +241,75 @@
   ⚠️ توابع trigger باید در یک اجرای جداگانه اجرا شوند — در غیر این صورت خطای <code>42P13</code> رخ می‌دهد.
 </div>
 
-<h3>۴. ساخت اکانت ادمین (سوپرادمین)</h3>
+<h3>۳. اتصال کدهای سایت به دیتابیس</h3>
+<p>سایت شما باید کدهایی که در مرحله ۱ کپی کردید را بشناسد.</p>
 <ol>
-  <li>برو به <strong>Authentication → Users → Add user → Create new user</strong></li>
-  <li>ایمیل و رمز دلخواه بزن و <strong>Auto Confirm User</strong> رو فعال کن</li>
-  <li>در SQL Editor اجرا کن:</li>
+  <li>در پوشه اصلی پروژه خود (<code>Web Blog</code>)، فایلی به نام <code>.env.local</code> وجود دارد.</li>
+  <li>آن را با یک ادیتور ساده باز کنید و کلیدهای خود را به این شکل در آن قرار دهید:</li>
 </ol>
-<pre><code>update public.profiles set role = 'superadmin' where email = 'you@example.com';</code></pre>
+<pre><code>NEXT_PUBLIC_SUPABASE_URL=آدرس_پروژه_شما_در_سوپابیس
+NEXT_PUBLIC_SUPABASE_ANON_KEY=کد_آنون_پابلیک_شما
+SUPABASE_SERVICE_ROLE_KEY=کد_سرویس_رول_شما
 
-<h3>۵. تنظیم Environment Variables</h3>
-<p>فایل <code>.env.local</code> رو پر کن:</p>
-<pre><code>NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...        # از Settings → API → service_role
-CRON_SECRET=یک-رشته-تصادفی              # مثلاً: openssl rand -hex 32
-NEXT_PUBLIC_FORMSPREE_ID=               # فعلاً خالی</code></pre>
+CRON_SECRET=my-secret-amir-f1-password-1234
+NEXT_PUBLIC_FORMSPREE_ID=</code></pre>
+<div class="note">
+  جلوی <code>CRON_SECRET</code> یک رمز انگلیسی سخت به دلخواه خودتان بنویسید. این رمز برای امنیت انتشار خودکار مقالات است.
+</div>
 
-<h3>۶. اجرا</h3>
-<pre><code>npm run dev</code></pre>
+<h3>۴. ساخت اکانت مدیر کل (ادمین)</h3>
+<ol>
+  <li>در Supabase به بخش <strong>Authentication</strong> (آیکون آدمک) بروید.</li>
+  <li>روی <strong>Add user</strong> و سپس <strong>Create new user</strong> کلیک کنید.</li>
+  <li>ایمیل و رمزی که می‌خواهید با آن وارد پنل مدیریت سایت شوید را وارد کرده و تیک <code>Auto Confirm User</code> را بزنید.</li>
+  <li>حالا دوباره به <strong>SQL Editor</strong> بروید و این یک خط کد را اجرا کنید (ایمیل خودتان را جایگزین کنید):</li>
+</ol>
+<pre><code>update public.profiles set role = 'superadmin' where email = 'ایمیل-شما@example.com';</code></pre>
+
+<h3>۵. اجرای سایت روی کامپیوتر</h3>
+<ol>
+  <li>در پوشه پروژه، کلیک راست کرده و Terminal (یا CMD) را باز کنید.</li>
+  <li>دستورات زیر را به ترتیب بزنید:</li>
+</ol>
+<pre><code>npm install
+npm run dev</code></pre>
 <p>
   سایت: <code>http://localhost:3000/fa</code><br>
   پنل مدیریت: <code>http://localhost:3000/admin</code>
 </p>
 
-<h2>✉️ فرم تماس (Formspree — رایگان)</h2>
+<h2>☁️ بردن سایت روی اینترنت (هاست رایگان Vercel)</h2>
+
+<h3>۱. ذخیره کدها در Github</h3>
 <ol>
-  <li>به <a href="https://formspree.io" target="_blank">formspree.io</a> برو و ثبت‌نام کن (رایگان — ۵۰ پیام/ماه)</li>
-  <li><strong>New form</strong> بساز و ایمیلت رو وارد کن</li>
-  <li>Form ID رو (مثل <code>xaybzwqp</code>) داخل <code>.env.local</code> بذار</li>
+  <li>در سایت <a href="https://github.com" target="_blank">Github.com</a> اکانت بسازید.</li>
+  <li>دکمه <strong>New Repository</strong> را بزنید، نامش را <code>amir-formula-blog</code> بگذارید و Create کنید.</li>
+  <li>در ترمینال کامپیوتر خودتان، این دستورات را بزنید (آدرس مخزن خودتان را در خط چهارم جایگزین کنید):</li>
 </ol>
-
-<h2>☁️ دیپلوی روی Vercel (رایگان)</h2>
-
-<h3>۱. ارسال کد به GitHub</h3>
-<pre><code>git init &amp;&amp; git add . &amp;&amp; git commit -m "Amir Formula blog"
-git remote add origin https://github.com/YOUR_USERNAME/amir-formula.git
+<pre><code>git add .
+git commit -m "First upload"
+git branch -M main
+git remote add origin https://github.com/نام-شما/amir-formula-blog.git
 git push -u origin main</code></pre>
 
-<h3>۲. Import در Vercel</h3>
+<h3>۲. اتصال به Vercel</h3>
 <ol>
-  <li>به <a href="https://vercel.com" target="_blank">vercel.com</a> برو و با گیت‌هاب لاگین کن</li>
-  <li><strong>Add New → Project</strong> → انتخاب ریپو</li>
-  <li>در قسمت <strong>Environment Variables</strong> هر ۵ مقدار رو دستی وارد کن</li>
-  <li><strong>Deploy</strong> بزن — تمام!</li>
+  <li>به سایت <a href="https://vercel.com" target="_blank">Vercel.com</a> بروید و با اکانت Github خود لاگین کنید.</li>
+  <li>دکمه <strong>Add New → Project</strong> را بزنید.</li>
+  <li>مخزن گیت‌هاب خود (<code>amir-formula-blog</code>) را می‌بینید؛ دکمه <strong>Import</strong> را بزنید.</li>
+  <li><strong>بسیار مهم:</strong> قبل از زدن دکمه Deploy، بخش <strong>Environment Variables</strong> را باز کنید.</li>
+  <li>هر ۵ موردی که در فایل <code>.env.local</code> وارد کرده بودید را اینجا دانه دانه کپی و <strong>Add</strong> کنید (Name در کادر اول، مقدار در کادر دوم).</li>
+  <li>حالا دکمه <strong>Deploy</strong> را بزنید!</li>
 </ol>
+<p>بعد از حدود ۲ دقیقه، Vercel یک لینک اختصاصی (مانند <code>amir-formula.vercel.app</code>) به شما می‌دهد که سایت شما روی اینترنت است!</p>
 
-<h3>۳. Cron (انتشار خودکار مقالات زمان‌دار)</h3>
-<div class="note">
-  فایل <code>vercel.json</code> از قبل تنظیم شده — هر روز ساعت ۳ بامداد مقالات زمان‌دار منتشر می‌شن.
-  حتی بدون cron هم مقاله دقیقاً سر ساعتش نمایش داده می‌شه؛ cron فقط وضعیت داشبورد رو به‌روز می‌کنه
-  و مانع pause شدن Supabase رایگان می‌شه.
-</div>
+<h2>✉️ راه‌اندازی فرم تماس با ما (اختیاری)</h2>
+<ol>
+  <li>در سایت <a href="https://formspree.io" target="_blank">formspree.io</a> ثبت‌نام کنید (۵۰ پیام در ماه رایگان است).</li>
+  <li>یک فرم جدید (<code>New form</code>) بسازید و ایمیل خود را وارد کنید.</li>
+  <li>به شما یک آیدی ۸ حرفی (مثل <code>xaybzwqp</code>) می‌دهد.</li>
+  <li>آن آیدی را در پنل Vercel (بخش Settings → Environment Variables) در متغیر <code>NEXT_PUBLIC_FORMSPREE_ID</code> ذخیره کنید تا فرم تماس سایت کار کند.</li>
+</ol>
 
 <h2>🔐 استفاده از پنل مدیریت</h2>
 <p>مسیر: <code>/admin</code></p>
