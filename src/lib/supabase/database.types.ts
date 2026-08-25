@@ -49,6 +49,7 @@ export type Database = {
           author_id: string | null;
           published_at: string | null;
           view_count: number;
+          like_count: number;
           created_at: string;
           updated_at: string;
         };
@@ -66,6 +67,7 @@ export type Database = {
           author_id?: string | null;
           published_at?: string | null;
           view_count?: number;
+          like_count?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -83,6 +85,7 @@ export type Database = {
           author_id?: string | null;
           published_at?: string | null;
           view_count?: number;
+          like_count?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -180,6 +183,10 @@ export type Database = {
       increment_post_views: {
         Args: { p_slug: string };
         Returns: undefined;
+      };
+      toggle_post_like: {
+        Args: { p_post_id: string; p_fingerprint: string };
+        Returns: number;
       };
       is_superadmin: {
         Args: Record<string, never>;

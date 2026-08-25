@@ -54,7 +54,7 @@ export default async function BlogPage({
               coverImage={post.cover_image_url}
               publishedAt={post.published_at || post.created_at}
               views={post.view_count}
-              likes={0}
+              likes={post.like_count || 0}
               tags={post.tags.map((tg) => ({
                 name: (locale === "en" ? tg.name_en : tg.name_fa) || tg.name_fa,
                 slug: tg.slug,

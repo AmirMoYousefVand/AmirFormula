@@ -59,7 +59,7 @@ export async function getPublishedPosts(page = 1, tagSlug?: string) {
 
   let query = supabase
     .from("posts")
-    .select("*", { count: "exact" })
+    .select("*", { count: "estimated" })
     .or(PUBLIC_POST_FILTER)
     .order("published_at", { ascending: false });
 

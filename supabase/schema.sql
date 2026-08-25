@@ -1,6 +1,8 @@
 -- ============================================================
 -- Amir Formula — Supabase Schema
--- این فایل را در Supabase Dashboard > SQL Editor اجرا کنید
+-- ============================================================
+-- مرحله ۱: جداول + RLS + توابع غیر-trigger را اجرا کنید
+-- مرحله ۲: توابع trigger را در اسکیمای جداگانه اجرا کنید
 -- ============================================================
 
 -- ============ PROFILES (نقش‌های ادمین) ============
@@ -12,9 +14,10 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now()
 );
 
--- تابع کمکی برای بررسی سوپرادمین (security definer تا از recursion جلوگیری شود)
-create or replace function public.is_superadmin() returns boolean
-language sql security definer stable set search_path = public
+-- تابع کمکی برای بررسی سوپرادمین
+create or replace function public.is_superadmin()
+returns boolean
+language sql
 as $$
   select exists(
     select 1 from public.profiles
@@ -32,7 +35,6 @@ create policy "profiles_update_self" on public.profiles
   using (auth.uid() = id)
   with check (auth.uid() = id);
 
--- فقط سوپرادمین می‌تواند نقش دیگران را تغییر دهد یا ادمین اضافه/حذف کند
 create policy "profiles_manage_super" on public.profiles
   for update to authenticated using (public.is_superadmin());
 
@@ -41,25 +43,6 @@ create policy "profiles_insert_super" on public.profiles
 
 create policy "profiles_delete_super" on public.profiles
   for delete to authenticated using (public.is_superadmin());
-
--- ساخت خودکار پروفایل هنگام ثبت‌نام در Auth
-create or replace function public.handle_new_user()
-returns trigger
-language sql security definer
-as $$
-  insert into public.profiles (id, email, full_name)
-  values (
-    new.id,
-    new.email,
-    coalesce(new.raw_user_meta_data->>'full_name', '')
-  );
-  return new;
-$$;
-
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute function public.handle_new_user();
 
 -- ============ POSTS ============
 create table if not exists public.posts (
@@ -76,6 +59,7 @@ create table if not exists public.posts (
   author_id uuid references public.profiles(id),
   published_at timestamptz,
   view_count integer not null default 0,
+  like_count integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -85,7 +69,6 @@ create index if not exists posts_slug_idx on public.posts (slug);
 
 alter table public.posts enable row level security;
 
--- خواندن عمومی: منتشرشده، یا زمان‌بندی‌شده‌ای که وقتش رسیده
 create policy "posts_read_public" on public.posts
   for select to anon using (
     status = 'published'
@@ -127,7 +110,7 @@ create policy "tags_update_admin" on public.tags
 create policy "tags_delete_admin" on public.tags
   for delete to authenticated using (true);
 
--- ============ POST_TAGS (رابطه چند به چند) ============
+-- ============ POST_TAGS ============
 create table if not exists public.post_tags (
   post_id uuid not null references public.posts(id) on delete cascade,
   tag_id uuid not null references public.tags(id) on delete cascade,
@@ -156,11 +139,9 @@ create index if not exists comments_post_idx on public.comments (post_id, status
 
 alter table public.comments enable row level security;
 
--- هرکسی می‌تواند نظر بدهد ولی همیشه به‌صورت pending
 create policy "comments_insert_anon" on public.comments
   for insert to anon, authenticated with check (status = 'pending');
 
--- عمومی فقط تأییدشده‌ها را می‌بیند
 create policy "comments_read_public" on public.comments
   for select using (status = 'approved');
 
@@ -186,14 +167,13 @@ create index if not exists likes_post_idx on public.likes (post_id);
 
 alter table public.likes enable row level security;
 
--- شمارش لایک‌ها عمومی است؛ نوشتن فقط از طریق service-role (API route)
 create policy "likes_read_public" on public.likes
   for select using (true);
 
--- ============ شمارنده بازدید (اتمیک) ============
+-- ============ شمارنده بازدید ============
 create or replace function public.increment_post_views(p_slug text)
 returns void
-language plpgsql security definer
+language plpgsql
 as $$
 begin
   update public.posts set view_count = view_count + 1 where slug = p_slug;
@@ -203,10 +183,28 @@ $$;
 revoke execute on function public.increment_post_views(text) from anon, authenticated;
 grant execute on function public.increment_post_views(text) to service_role;
 
--- ============================================================
--- مراحل بعدی (دستی از داشبورد):
--- 1. Storage > ساخت باکت public به نام covers
--- 2. Authentication > Users > Add user (ایمیل و رمز ادمین)
--- 3. SQL Editor:
---    update public.profiles set role='superadmin' where email='you@example.com';
--- ============================================================
+-- ============ تابع اتمیک برای لایک ============
+create or replace function public.toggle_post_like(p_post_id uuid, p_fingerprint text)
+returns integer
+language plpgsql
+as $$
+declare
+  v_count integer;
+  v_exists boolean;
+begin
+  select exists(select 1 from public.likes where post_id = p_post_id and fingerprint = p_fingerprint) into v_exists;
+
+  if v_exists then
+    delete from public.likes where post_id = p_post_id and fingerprint = p_fingerprint;
+    update public.posts set like_count = like_count - 1 where id = p_post_id returning like_count into v_count;
+  else
+    insert into public.likes (post_id, fingerprint) values (p_post_id, p_fingerprint);
+    update public.posts set like_count = like_count + 1 where id = p_post_id returning like_count into v_count;
+  end if;
+
+  return v_count;
+end;
+$$;
+
+revoke execute on function public.toggle_post_like(uuid, text) from anon, authenticated;
+grant execute on function public.toggle_post_like(uuid, text) to service_role;

@@ -231,11 +231,15 @@
 </ol>
 
 <h3>۳. اجرای اسکیما</h3>
+<p>در داشبورد Supabase برو به <strong>SQL Editor</strong> و <strong>دو مرحله</strong> را جداگانه اجرا کن:</p>
 <ol>
-  <li>در داشبورد Supabase برو به <strong>SQL Editor</strong></li>
-  <li>کل محتوای فایل <code>supabase/schema.sql</code> رو کپی و <strong>Run</strong> کن</li>
+  <li><strong>مرحله ۱:</strong> محتوای فایل <code>supabase/schema.sql</code> را کپی و <strong>Run</strong> کن (جداول + RLS + توابع)</li>
+  <li><strong>مرحله ۲:</strong> محتوای فایل <code>supabase/triggers.sql</code> را کپی و <strong>Run</strong> کن (توابع trigger)</li>
   <li>در <strong>Storage → New Bucket</strong>: نام <code>covers</code> + فعال کردن <strong>Public bucket</strong></li>
 </ol>
+<div class="note">
+  ⚠️ توابع trigger باید در یک اجرای جداگانه اجرا شوند — در غیر این صورت خطای <code>42P13</code> رخ می‌دهد.
+</div>
 
 <h3>۴. ساخت اکانت ادمین (سوپرادمین)</h3>
 <ol>

@@ -3,10 +3,14 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(request: NextRequest) {
   // Verify cron secret (Vercel sends Authorization: Bearer CRON_SECRET)
-  const authHeader = request.headers.get("authorization");
-  const expected = `Bearer ${process.env.CRON_SECRET}`;
+  const secret = process.env.CRON_SECRET;
 
-  if (!process.env.CRON_SECRET || authHeader !== expected) {
+  if (!secret) {
+    return NextResponse.json({ error: "Configuration Error" }, { status: 500 });
+  }
+
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

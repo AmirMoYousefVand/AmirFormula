@@ -17,22 +17,16 @@ export async function GET(request: NextRequest) {
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
-  // Get post id
+  // Get post id and like count
   const { data: post } = await supabase
     .from("posts")
-    .select("id")
+    .select("id, like_count")
     .eq("slug", slug)
     .maybeSingle();
 
   if (!post) {
     return NextResponse.json({ count: 0, liked: false });
   }
-
-  // Count total likes
-  const { count } = await supabase
-    .from("likes")
-    .select("*", { count: "exact", head: true })
-    .eq("post_id", post.id);
 
   // Check if this fingerprint liked
   const { data: existing } = await supabase
@@ -43,7 +37,7 @@ export async function GET(request: NextRequest) {
     .maybeSingle();
 
   return NextResponse.json({
-    count: count || 0,
+    count: post.like_count || 0,
     liked: !!existing,
   });
 }
@@ -84,25 +78,16 @@ export async function POST(request: NextRequest) {
     .eq("fingerprint", fingerprint)
     .maybeSingle();
 
-  let liked: boolean;
+  const liked = !existing; // If it existed, it will be unliked. If it didn't, it will be liked.
 
-  if (existing) {
-    // Unlike
-    await supabase.from("likes").delete().eq("id", existing.id);
-    liked = false;
-  } else {
-    // Like
-    await supabase
-      .from("likes")
-      .insert({ post_id: post.id, fingerprint });
-    liked = true;
+  const { data: newCount, error } = await supabase.rpc("toggle_post_like", {
+    p_post_id: post.id,
+    p_fingerprint: fingerprint,
+  });
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Get updated count
-  const { count } = await supabase
-    .from("likes")
-    .select("*", { count: "exact", head: true })
-    .eq("post_id", post.id);
-
-  return NextResponse.json({ count: count || 0, liked });
+  return NextResponse.json({ count: newCount || 0, liked });
 }
