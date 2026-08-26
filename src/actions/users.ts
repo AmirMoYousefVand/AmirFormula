@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-async function requireSuperadmin() {
+async function requireOwner() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -18,16 +18,50 @@ async function requireSuperadmin() {
     .eq("id", user.id)
     .single();
 
-  if (!profile || profile.role !== "superadmin") return null;
+  if (!profile || profile.role !== "owner") return null;
   return supabase;
 }
 
-export async function inviteEditorAction(
+async function requireAdmin() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || !["owner", "admin"].includes(profile.role)) return null;
+  return supabase;
+}
+
+export async function inviteUserAction(
   _prev: { error: string; success: string } | null,
   formData: FormData
 ): Promise<{ error: string; success: string } | null> {
-  if (!(await requireSuperadmin())) {
-    return { error: "فقط سوپرادمین دسترسی دارد", success: "" };
+  const supabase = await requireAdmin();
+  if (!supabase) {
+    return { error: "فقط ادمین و مالک دسترسی دارند", success: "" };
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user!.id)
+    .single();
+
+  const roleToInvite = String(formData.get("role") || "author");
+
+  if (profile?.role === "admin" && roleToInvite !== "author") {
+    return { error: "ادمین فقط می‌تواند نویسنده دعوت کند", success: "" };
   }
 
   const email = String(formData.get("email") || "");
@@ -41,27 +75,45 @@ export async function inviteEditorAction(
   const { data, error } = await adminClient.auth.admin.inviteUserByEmail(
     email,
     {
-      data: { full_name: fullName },
+      data: { full_name: fullName, role: roleToInvite },
     }
   );
 
   if (error) return { error: error.message, success: "" };
 
-  // Profile auto-created by trigger — set role to editor (default already)
   revalidatePath("/admin/users");
   return { error: "", success: `دعوت‌نامه به ${email} ارسال شد` };
 }
 
 export async function updateUserRoleAction(
   userId: string,
-  role: "superadmin" | "editor"
+  role: "owner" | "admin" | "author"
 ) {
-  if (!(await requireSuperadmin())) {
-    return { error: "فقط سوپرادمین دسترسی دارد" };
+  const supabase = await requireAdmin();
+  if (!supabase) {
+    return { error: "فقط ادمین و مالک دسترسی دارند" };
   }
 
-  const supabase = await requireSuperadmin();
-  if (!supabase) return { error: "Unauthorized" };
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user!.id)
+    .single();
+
+  const { data: targetProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+
+  if (profile?.role === "admin") {
+    if (role !== "author" || targetProfile?.role !== "author") {
+      return { error: "ادمین فقط می‌تواند نقش نویسنده‌ها را تغییر دهد" };
+    }
+  }
 
   const { error } = await supabase
     .from("profiles")
@@ -74,13 +126,30 @@ export async function updateUserRoleAction(
 }
 
 export async function deleteUserAction(userId: string) {
-  const supabase = await requireSuperadmin();
-  if (!supabase) return { error: "فقط سوپرادمین دسترسی دارد" };
+  const supabase = await requireAdmin();
+  if (!supabase) return { error: "فقط ادمین و مالک دسترسی دارند" };
 
-  // Prevent deleting yourself
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user!.id)
+    .single();
+
+  // Admin cannot delete owner or another admin, only authors. We should check the target user role.
+  const { data: targetProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+
+  if (profile?.role === "admin" && targetProfile?.role !== "author") {
+    return { error: "ادمین فقط می‌تواند نویسنده را حذف کند" };
+  }
+
+  // Prevent deleting yourself
   if (user?.id === userId) {
     return { error: "نمی‌توانید حساب خودتان را حذف کنید" };
   }

@@ -14,8 +14,8 @@ export default async function AdminUsersPage() {
     .eq("id", user!.id)
     .single();
 
-  // Server-side superadmin gate (defense in depth)
-  if (!me || me.role !== "superadmin") {
+  // Server-side admin/owner gate (defense in depth)
+  if (!me || !["owner", "admin"].includes(me.role)) {
     redirect("/admin");
   }
 
@@ -27,15 +27,16 @@ export default async function AdminUsersPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="text-2xl font-black text-navy">مدیریت مدیران</h1>
+        <h1 className="text-2xl font-black text-navy">مدیریت کاربران</h1>
         <p className="mt-1 text-sm text-body">
-          دعوت ادیتور جدید، تغییر نقش‌ها و حذف حساب‌ها — فقط سوپرادمین
+          دعوت کاربران جدید، تغییر نقش‌ها و حذف حساب‌ها
         </p>
       </header>
 
       <UsersManager
         profiles={profiles || []}
         currentUserId={user!.id}
+        currentUserRole={me.role as "owner" | "admin" | "author"}
       />
     </div>
   );

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import LanguageSwitcher from "./LanguageSwitcher";
 import SearchDialog from "@/components/blog/SearchDialog";
+import { Coffee } from "lucide-react";
 
 const navKeys = ["home", "blog", "analytics", "contact"] as const;
 
@@ -62,9 +63,28 @@ export default function Header({ logoUrl }: { logoUrl?: string | null }) {
                 </Link>
               );
             })}
+            <a
+              href="https://www.coffeete.ir/Amir_formula"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-2 flex items-center gap-1.5 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+            >
+              <Coffee className="h-4 w-4" />
+              <span>حامی من باش</span>
+            </a>
           </nav>
 
           <div className="flex items-center gap-2">
+            <a
+              href="https://www.coffeete.ir/Amir_formula"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="حامی من باش"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-primary/20 hover:text-primary md:hidden"
+            >
+              <Coffee className="h-5 w-5" />
+            </a>
+
             <button
               onClick={() => setSearchOpen(true)}
               aria-label="Search"
@@ -103,6 +123,15 @@ export default function Header({ logoUrl }: { logoUrl?: string | null }) {
                     </Link>
                   );
                 })}
+                <a
+                  href="https://www.coffeete.ir/Amir_formula"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-white/10"
+                >
+                  <Coffee className="h-4 w-4" />
+                  حامی من باش
+                </a>
               </div>
             </details>
           </div>

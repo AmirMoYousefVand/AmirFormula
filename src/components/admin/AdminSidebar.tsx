@@ -11,12 +11,13 @@ const links = [
   { href: "/admin/posts", label: "مقالات", icon: "📝" },
   { href: "/admin/comments", label: "نظرات", icon: "💬" },
   { href: "/admin/tags", label: "برچسب‌ها", icon: "🏷" },
-  { href: "/admin/storage", label: "فضای ذخیره‌سازی", icon: "💾" },
-  { href: "/admin/settings", label: "تنظیمات سایت", icon: "⚙️" },
-  { href: "/admin/users", label: "مدیران", icon: "👥", superadminOnly: true },
+  { href: "/admin/storage", label: "فضای ذخیره‌سازی", icon: "💾", adminOnly: true },
+  { href: "/admin/settings", label: "تنظیمات سایت", icon: "⚙️", adminOnly: true },
+  { href: "/admin/settings/social-links", label: "شبکه‌های اجتماعی", icon: "🌐", adminOnly: true },
+  { href: "/admin/users", label: "مدیران", icon: "👥", adminOnly: true },
 ];
 
-export default function AdminSidebar({
+export function AdminSidebar({
   role,
   email,
   logoUrl,
@@ -84,7 +85,7 @@ export default function AdminSidebar({
           </button>
 
           {links.map((link) => {
-            if (link.superadminOnly && role !== "superadmin") return null;
+            if (link.adminOnly && !["owner", "admin"].includes(role)) return null;
 
             const active = link.exact
               ? pathname === link.href

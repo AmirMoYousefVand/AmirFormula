@@ -2,7 +2,7 @@
 
 import { useActionState, useState, useTransition } from "react";
 import {
-  inviteEditorAction,
+  inviteUserAction,
   updateUserRoleAction,
   deleteUserAction,
 } from "@/actions/users";
@@ -11,34 +11,43 @@ type Profile = {
   id: string;
   email: string;
   full_name: string | null;
-  role: "superadmin" | "editor";
+  role: "owner" | "admin" | "author";
   created_at: string;
 };
 
 const roleLabel: Record<string, string> = {
-  superadmin: "سوپرادمین",
-  editor: "ادیتور",
+  owner: "مالک",
+  admin: "ادمین",
+  author: "نویسنده",
 };
 
 export default function UsersManager({
   profiles,
   currentUserId,
+  currentUserRole,
 }: {
   profiles: Profile[];
   currentUserId: string;
+  currentUserRole: "owner" | "admin" | "author";
 }) {
   const [inviteState, inviteAction, inviting] = useActionState(
-    inviteEditorAction,
+    inviteUserAction,
     null as { error: string; success: string } | null
   );
   const [, startTransition] = useTransition();
   const [busyId, setBusyId] = useState<string | null>(null);
 
+  const canEditUser = (targetRole: "owner" | "admin" | "author") => {
+    if (currentUserRole === "owner") return true;
+    if (currentUserRole === "admin" && targetRole === "author") return true;
+    return false;
+  };
+
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       {/* Invite form */}
       <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-silver/40">
-        <h2 className="mb-4 font-bold text-navy">دعوت مدیر جدید</h2>
+        <h2 className="mb-4 font-bold text-navy">دعوت کاربر جدید</h2>
 
         <form action={inviteAction} className="space-y-3">
           <div>
@@ -48,7 +57,7 @@ export default function UsersManager({
               type="email"
               required
               dir="ltr"
-              placeholder="editor@example.com"
+              placeholder="user@example.com"
               className="w-full rounded-lg border border-silver/50 px-3 py-2 text-sm outline-none focus:border-primary"
             />
           </div>
@@ -62,6 +71,22 @@ export default function UsersManager({
               maxLength={100}
               className="w-full rounded-lg border border-silver/50 px-3 py-2 text-sm outline-none focus:border-primary"
             />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-bold text-navy">نقش</label>
+            <select
+              name="role"
+              className="w-full rounded-lg border border-silver/50 px-3 py-2 text-sm outline-none focus:border-primary"
+            >
+              <option value="author">نویسنده</option>
+              {currentUserRole === "owner" && (
+                <>
+                  <option value="admin">ادمین</option>
+                  <option value="owner">مالک</option>
+                </>
+              )}
+            </select>
           </div>
 
           {inviteState?.error && (
@@ -118,9 +143,9 @@ export default function UsersManager({
                     </div>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    {p.id === currentUserId ? (
+                    {p.id === currentUserId || !canEditUser(p.role) ? (
                       <span className="rounded-full bg-navy-light px-3 py-1 text-xs font-bold text-white">
-                        {roleLabel[p.role]}
+                        {roleLabel[p.role] || p.role}
                       </span>
                     ) : (
                       <select
@@ -131,20 +156,25 @@ export default function UsersManager({
                           startTransition(async () => {
                             await updateUserRoleAction(
                               p.id,
-                              e.target.value as "superadmin" | "editor"
+                              e.target.value as "owner" | "admin" | "author"
                             );
                             window.location.reload();
                           });
                         }}
                         className="rounded-lg border border-silver/50 bg-white px-2 py-1 text-xs outline-none focus:border-primary"
                       >
-                        <option value="editor">ادیتور</option>
-                        <option value="superadmin">سوپرادمین</option>
+                        <option value="author">نویسنده</option>
+                        {currentUserRole === "owner" && (
+                          <>
+                            <option value="admin">ادمین</option>
+                            <option value="owner">مالک</option>
+                          </>
+                        )}
                       </select>
                     )}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    {p.id !== currentUserId && (
+                    {p.id !== currentUserId && canEditUser(p.role) && (
                       <button
                         disabled={busyId === p.id}
                         onClick={() => {

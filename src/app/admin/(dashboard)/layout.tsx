@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteLogoUrl } from "@/components/SiteLogo";
-import AdminSidebar from "@/components/admin/AdminSidebar";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
 
 export default async function DashboardLayout({
   children,

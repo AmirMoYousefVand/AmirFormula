@@ -15,21 +15,21 @@ export type Database = {
           id: string;
           email: string;
           full_name: string | null;
-          role: "superadmin" | "editor";
+          role: "owner" | "admin" | "author";
           created_at: string;
         };
         Insert: {
           id: string;
           email: string;
           full_name?: string | null;
-          role?: "superadmin" | "editor";
+          role?: "owner" | "admin" | "author";
           created_at?: string;
         };
         Update: {
           id?: string;
           email?: string;
           full_name?: string | null;
-          role?: "superadmin" | "editor";
+          role?: "owner" | "admin" | "author";
           created_at?: string;
         };
       };
@@ -168,6 +168,39 @@ export type Database = {
           created_at?: string;
         };
       };
+            social_links: {
+        Relationships: [];
+        Row: {
+          id: string;
+          platform: string;
+          url: string;
+          icon_name: string | null;
+          sort_order: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          platform: string;
+          url: string;
+          icon_name?: string | null;
+          sort_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          platform?: string;
+          url?: string;
+          icon_name?: string | null;
+          sort_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       site_settings: {
         Relationships: [];
         Row: {
@@ -218,7 +251,11 @@ export type Database = {
         Args: { p_post_id: string; p_fingerprint: string };
         Returns: number;
       };
-      is_superadmin: {
+      is_owner: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      is_admin: {
         Args: Record<string, never>;
         Returns: boolean;
       };
@@ -232,3 +269,4 @@ export type Post = Database["public"]["Tables"]["posts"]["Row"];
 export type Tag = Database["public"]["Tables"]["tags"]["Row"];
 export type Comment = Database["public"]["Tables"]["comments"]["Row"];
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type SocialLink = Database["public"]["Tables"]["social_links"]["Row"];

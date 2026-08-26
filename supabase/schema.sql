@@ -10,18 +10,29 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null,
   full_name text,
-  role text not null default 'editor' check (role in ('superadmin','editor')),
+  role text not null default 'author' check (role in ('owner','admin','author')),
   created_at timestamptz not null default now()
 );
 
--- تابع کمکی برای بررسی سوپرادمین
-create or replace function public.is_superadmin()
+-- تابع کمکی برای بررسی مالک
+create or replace function public.is_owner()
 returns boolean
 language sql
 as $$
   select exists(
     select 1 from public.profiles
-    where id = auth.uid() and role = 'superadmin'
+    where id = auth.uid() and role = 'owner'
+  )
+$$;
+
+-- تابع کمکی برای بررسی ادمین (مالک هم ادمین محسوب میشه)
+create or replace function public.is_admin()
+returns boolean
+language sql
+as $$
+  select exists(
+    select 1 from public.profiles
+    where id = auth.uid() and role in ('owner', 'admin')
   )
 $$;
 
@@ -35,14 +46,14 @@ create policy "profiles_update_self" on public.profiles
   using (auth.uid() = id)
   with check (auth.uid() = id);
 
-create policy "profiles_manage_super" on public.profiles
-  for update to authenticated using (public.is_superadmin());
+create policy "profiles_manage_admin" on public.profiles
+  for update to authenticated using (public.is_admin());
 
-create policy "profiles_insert_super" on public.profiles
-  for insert to authenticated with check (public.is_superadmin());
+create policy "profiles_insert_admin" on public.profiles
+  for insert to authenticated with check (public.is_admin());
 
-create policy "profiles_delete_super" on public.profiles
-  for delete to authenticated using (public.is_superadmin());
+create policy "profiles_delete_owner" on public.profiles
+  for delete to authenticated using (public.is_owner());
 
 -- ============ POSTS ============
 create table if not exists public.posts (
@@ -252,3 +263,23 @@ create policy "settings_read_public" on public.site_settings
 
 create policy "settings_write_admin" on public.site_settings
   for all to authenticated using (true) with check (true);
+
+-- ============ SOCIAL LINKS ============
+create table if not exists public.social_links (
+  id uuid primary key default gen_random_uuid(),
+  platform text not null, 
+  url text not null,      
+  icon_name text not null,
+  is_active boolean not null default true, 
+  sort_order integer not null default 0,   
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.social_links enable row level security;
+
+create policy "social_links_read_public" on public.social_links
+  for select using (true);
+
+create policy "social_links_write_admin" on public.social_links
+  for all to authenticated using (public.is_admin()) with check (public.is_admin());

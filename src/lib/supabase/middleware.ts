@@ -39,6 +39,21 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  if (user && !isLoginPage) {
+    // Check if the user has a valid role (owner, admin, author) to access /admin
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile || !["owner", "admin", "author"].includes(profile.role)) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/admin/login";
+      return NextResponse.redirect(url);
+    }
+  }
+
   if (user && isLoginPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin";

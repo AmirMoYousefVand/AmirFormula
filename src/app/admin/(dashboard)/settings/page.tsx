@@ -1,25 +1,40 @@
-import { createClient } from "@/lib/supabase/server";
-import SiteSettingsForm from "./settings-form";
+"use client";
 
-export default async function AdminSettingsPage() {
-  const supabase = await createClient();
-  const { data: rows } = await supabase.from("site_settings").select("key, value");
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-  const settings: Record<string, string> = {};
-  for (const row of rows || []) {
-    if (row.value) settings[row.key] = row.value;
-  }
+const tabs = [
+  { href: "/admin/settings", label: "تنظیمات عمومی", icon: "⚙️" },
+  { href: "/admin/settings/social-links", label: "شبکه‌های اجتماعی", icon: "🌐" },
+];
+
+export default function AdminSettingsLayout() {
+  const pathname = usePathname();
 
   return (
     <div>
       <header className="mb-6">
         <h1 className="text-2xl font-black text-navy">تنظیمات سایت</h1>
-        <p className="mt-1 text-sm text-body">
-          نام سایت، توضیحات و فاوآیکون را از اینجا تغییر دهید
-        </p>
       </header>
 
-      <SiteSettingsForm initial={settings} />
+      <nav className="mb-6 flex gap-2 overflow-x-auto">
+        {tabs.map((tab) => (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            className={`flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+              pathname === tab.href
+                ? "bg-primary text-navy"
+                : "text-body hover:bg-silver/10 hover:text-navy"
+            }`}
+          >
+            <span>{tab.icon}</span>
+            {tab.label}
+          </Link>
+        ))}
+      </nav>
+
+      <div id="settings-content" />
     </div>
   );
 }
