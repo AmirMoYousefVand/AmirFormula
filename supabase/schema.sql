@@ -268,6 +268,15 @@ create policy "donation_goals_read_public" on public.donation_goals
 create policy "donation_goals_write_admin" on public.donation_goals
   for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
+-- ============================================================
+-- اگر جدول قدیمی donation_goal (تکی) دارید، این کد رو اجرا کنید
+-- تا داده‌ها به جدول جدید donation_goals منتقل بشه:
+-- ============================================================
+-- INSERT INTO public.donation_goals (goal_text, target_amount, sort_order, is_active)
+-- SELECT goal_text, target_amount, 0, true FROM public.donation_goal;
+-- DROP TABLE IF EXISTS public.donation_goal;
+-- ============================================================
+
 -- ============ MODERATED DONORS (مدیریت دونیت‌ها) ============
 create table if not exists public.moderated_donors (
   id uuid primary key default gen_random_uuid(),

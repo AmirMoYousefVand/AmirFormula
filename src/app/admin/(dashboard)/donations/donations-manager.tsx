@@ -31,7 +31,7 @@ export default function DonationsManager({
           <div>
             <h2 className="text-lg font-bold text-navy">{goals.length} هدف فعال</h2>
             <p className="text-xs text-body">
-              کل مبلغ هدف: {goals.reduce((s, g) => s + g.target_amount, 0).toLocaleString("fa-IR")} تومان
+              کل مبلغ هدف: {goals.reduce((s, g) => s + g.target_amount, 0).toLocaleString("en-US")} تومان
             </p>
           </div>
           <p className="rounded-full bg-silver/20 px-4 py-2 text-xs text-body">
@@ -146,7 +146,7 @@ export default function DonationsManager({
                 <tr key={g.id} className="hover:bg-silver/5">
                   <td className="px-4 py-3 font-bold text-navy">{i + 1}</td>
                   <td className="px-4 py-3 font-medium text-navy">{g.goal_text}</td>
-                  <td className="px-4 py-3 text-center text-body" dir="ltr">{g.target_amount.toLocaleString()} Tomans</td>
+                  <td className="px-4 py-3 text-center text-body" dir="ltr">{g.target_amount.toLocaleString("en-US")} Toman</td>
                   <td className="px-4 py-3 text-center">
                     <span className={`rounded-full px-3 py-1 text-xs font-bold ${g.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
                       {g.is_active ? "فعال" : "غیرفعال"}
