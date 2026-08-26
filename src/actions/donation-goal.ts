@@ -139,9 +139,10 @@ export async function getHomepageDonations(): Promise<{
     const moderated = moderatedData.data || [];
 
     // Build moderation map: donation_id -> moderator override
-    const modMap = new Map<number, { custom_name: string | null; custom_amount: number | null; is_hidden: boolean; custom_message: string | null }>();
+    // Use string keys because API ids may arrive as strings
+    const modMap = new Map<string, { custom_name: string | null; custom_amount: number | null; is_hidden: boolean; custom_message: string | null }>();
     for (const m of moderated as Record<string, unknown>[]) {
-      modMap.set(m.donation_id as number, {
+      modMap.set(String(m.donation_id), {
         custom_name: m.custom_name as string | null,
         custom_amount: m.custom_amount as number | null,
         is_hidden: m.is_hidden as boolean,
@@ -152,7 +153,7 @@ export async function getHomepageDonations(): Promise<{
     // Process donations: apply moderation, filter hidden
     const processedDonations = donations
       .map((d) => {
-        const mod = modMap.get(d.id);
+        const mod = modMap.get(String(d.id));
         if (mod?.is_hidden) return null;
         return {
           ...d,

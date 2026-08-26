@@ -277,6 +277,9 @@ create policy "donation_goals_write_admin" on public.donation_goals
 -- DROP TABLE IF EXISTS public.donation_goal;
 -- ============================================================
 
+-- اگر جدول moderated_donors قبلاً بدون custom_message ساخته شده:
+-- ALTER TABLE public.moderated_donors ADD COLUMN IF NOT EXISTS custom_message text;
+
 -- ============ MODERATED DONORS (مدیریت دونیت‌ها) ============
 create table if not exists public.moderated_donors (
   id uuid primary key default gen_random_uuid(),
