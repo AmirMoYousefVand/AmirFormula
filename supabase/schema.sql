@@ -249,6 +249,23 @@ create policy "Anyone can delete covers"
   on storage.objects for delete to public
   using ( bucket_id = 'covers' );
 
+-- ============ DONATION GOAL (هدف حمایت مالی) ============
+create table if not exists public.donation_goal (
+  id uuid primary key default gen_random_uuid(),
+  target_amount integer not null default 5000000,
+  current_amount integer not null default 0,
+  goal_text text not null default 'حمایت از توسعه سایت',
+  updated_at timestamptz not null default now()
+);
+
+alter table public.donation_goal enable row level security;
+
+create policy "donation_goal_read_public" on public.donation_goal
+  for select using (true);
+
+create policy "donation_goal_write_admin" on public.donation_goal
+  for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
 -- ============ SITE SETTINGS (تنظیمات سایت) ============
 create table if not exists public.site_settings (
   key text primary key,

@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getFeaturedPosts, localizedTitle, localizedExcerpt } from "@/lib/queries";
 import PostCard from "@/components/blog/PostCard";
+import DonationGoal from "@/components/home/DonationGoal";
 
 export default async function HomePage({
   params,
@@ -110,6 +111,9 @@ export default async function HomePage({
           </div>
         )}
       </section>
+
+      {/* Donation Goal */}
+      <DonationGoal />
 
       {/* About + Telegram CTA */}
       <section className="bg-silver/20">

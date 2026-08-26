@@ -52,6 +52,19 @@ export function DynamicIcon({ name, className, withColor }: DynamicIconProps) {
 
   const normalized = name.toLowerCase().replace(/[\s-]/g, "");
 
+  // Coffeete: use actual logo from their server
+  if (normalized === "coffeete") {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src="https://coffeete.ir/Logo.svg"
+        alt="Coffeete"
+        className={className}
+        style={{ filter: withColor ? "none" : "brightness(0) invert(1)" }}
+      />
+    );
+  }
+
   if (brandSvgs[normalized]) {
     return (
       <svg viewBox="0 0 24 24" className={className} fill={withColor ? brandColors[normalized] || "currentColor" : "currentColor"}>

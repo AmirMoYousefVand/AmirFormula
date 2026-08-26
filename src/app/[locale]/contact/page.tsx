@@ -1,5 +1,4 @@
 import ContactForm from "./ContactForm";
-import Donations from "@/components/Donations";
 import { getTranslations } from "next-intl/server";
 import ContactSocialLinks from "@/components/ui/SocialLinks/ContactSocialLinks";
 
@@ -27,7 +26,6 @@ export default async function ContactPage({
 
         <div className="lg:col-span-2 space-y-8">
           <ContactSocialLinks />
-          <Donations />
         </div>
       </div>
     </div>
