@@ -249,21 +249,42 @@ create policy "Anyone can delete covers"
   on storage.objects for delete to public
   using ( bucket_id = 'covers' );
 
--- ============ DONATION GOAL (هدف حمایت مالی) ============
-create table if not exists public.donation_goal (
+-- ============ DONATION GOALS (اهداف حمایت مالی) ============
+create table if not exists public.donation_goals (
   id uuid primary key default gen_random_uuid(),
-  target_amount integer not null default 5000000,
-  current_amount integer not null default 0,
   goal_text text not null default 'حمایت از توسعه سایت',
+  target_amount integer not null default 5000000,
+  sort_order integer not null default 0,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-alter table public.donation_goal enable row level security;
+alter table public.donation_goals enable row level security;
 
-create policy "donation_goal_read_public" on public.donation_goal
+create policy "donation_goals_read_public" on public.donation_goals
   for select using (true);
 
-create policy "donation_goal_write_admin" on public.donation_goal
+create policy "donation_goals_write_admin" on public.donation_goals
+  for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+-- ============ MODERATED DONORS (مدیریت دونیت‌ها) ============
+create table if not exists public.moderated_donors (
+  id uuid primary key default gen_random_uuid(),
+  donation_id integer not null unique,
+  custom_name text,
+  custom_amount integer,
+  is_hidden boolean not null default false,
+  hidden_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+alter table public.moderated_donors enable row level security;
+
+create policy "moderated_donors_read_public" on public.moderated_donors
+  for select using (true);
+
+create policy "moderated_donors_write_admin" on public.moderated_donors
   for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
 -- ============ SITE SETTINGS (تنظیمات سایت) ============

@@ -168,28 +168,64 @@ export type Database = {
           created_at?: string;
         };
       };
-            donation_goal: {
+            donation_goals: {
         Relationships: [];
         Row: {
           id: string;
-          target_amount: number;
-          current_amount: number;
           goal_text: string;
+          target_amount: number;
+          sort_order: number;
+          is_active: boolean;
+          created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
-          target_amount?: number;
-          current_amount?: number;
           goal_text?: string;
+          target_amount?: number;
+          sort_order?: number;
+          is_active?: boolean;
+          created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
-          target_amount?: number;
-          current_amount?: number;
           goal_text?: string;
+          target_amount?: number;
+          sort_order?: number;
+          is_active?: boolean;
+          created_at?: string;
           updated_at?: string;
+        };
+      };
+      moderated_donors: {
+        Relationships: [];
+        Row: {
+          id: string;
+          donation_id: number;
+          custom_name: string | null;
+          custom_amount: number | null;
+          is_hidden: boolean;
+          hidden_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          donation_id: number;
+          custom_name?: string | null;
+          custom_amount?: number | null;
+          is_hidden?: boolean;
+          hidden_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          donation_id?: number;
+          custom_name?: string | null;
+          custom_amount?: number | null;
+          is_hidden?: boolean;
+          hidden_at?: string | null;
+          created_at?: string;
         };
       };
       social_links: {
@@ -294,4 +330,4 @@ export type Tag = Database["public"]["Tables"]["tags"]["Row"];
 export type Comment = Database["public"]["Tables"]["comments"]["Row"];
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type SocialLink = Database["public"]["Tables"]["social_links"]["Row"];
-export type DonationGoal = Database["public"]["Tables"]["donation_goal"]["Row"];
+export type DonationGoal = Database["public"]["Tables"]["donation_goals"]["Row"];

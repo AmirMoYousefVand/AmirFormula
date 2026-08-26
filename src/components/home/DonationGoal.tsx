@@ -1,13 +1,13 @@
 import { Coffee } from "lucide-react";
 import { getHomepageDonations } from "@/actions/donation-goal";
-import { formatDate } from "@/lib/utils";
 
 export default async function DonationGoal() {
-  const { goal, donations } = await getHomepageDonations();
+  const { goals, donations } = await getHomepageDonations();
+
+  if (!goals.length && !donations.length) return null;
 
   return (
     <section className="relative overflow-hidden bg-navy-light">
-      {/* Background decoration */}
       <div className="pointer-events-none absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "repeating-linear-gradient(45deg, #fff 0 1px, transparent 1px 24px)" }} />
       <div className="absolute -end-24 top-0 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
 
@@ -22,31 +22,33 @@ export default async function DonationGoal() {
           </p>
         </div>
 
-        {goal && (
-          <div className="mx-auto mb-10 max-w-xl rounded-2xl bg-white/5 p-6 backdrop-blur-sm ring-1 ring-white/10">
-            <div className="mb-4 flex items-center justify-between text-sm">
-              <span className="font-bold text-primary">{goal.text}</span>
-              <span className="text-white/80">
-                {goal.percent}٪
-              </span>
-            </div>
+        {/* Goals */}
+        {goals.length > 0 && (
+          <div className="mx-auto mb-10 max-w-2xl space-y-4">
+            {goals.map((g, i) => (
+              <div key={g.id} className="rounded-2xl bg-white/5 p-5 backdrop-blur-sm ring-1 ring-white/10">
+                <div className="mb-3 flex items-center justify-between text-sm">
+                  <span className="font-bold text-primary">
+                    {i + 1}. {g.text}
+                  </span>
+                  <span className="text-white/80">{g.percent}%</span>
+                </div>
 
-            {/* Progress bar */}
-            <div className="mb-3 h-5 overflow-hidden rounded-full bg-white/10">
-              <div
-                className="h-full rounded-full bg-gradient-to-l from-primary to-primary-hover transition-all duration-1000"
-                style={{ width: `${Math.max(goal.percent, 1)}%` }}
-              />
-            </div>
+                <div className="mb-2 h-4 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-l from-primary to-primary-hover transition-all duration-1000"
+                    style={{ width: `${Math.max(g.percent, 1)}%` }}
+                  />
+                </div>
 
-            <div className="flex items-center justify-between text-xs text-white/60">
-              <span className="text-primary font-bold text-sm">
-                {goal.current.toLocaleString("fa-IR")} تومان
-              </span>
-              <span>
-                از {goal.target.toLocaleString("fa-IR")} تومان
-              </span>
-            </div>
+                <div className="flex items-center justify-between text-xs text-white/60">
+                  <span className="text-primary font-bold text-sm">
+                    {g.current.toLocaleString("fa-IR")} تومان
+                  </span>
+                  <span>از {g.target.toLocaleString("fa-IR")} تومان</span>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -58,10 +60,7 @@ export default async function DonationGoal() {
             </h3>
             <div className="space-y-2">
               {donations.map((d) => (
-                <div
-                  key={d.id}
-                  className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 ring-1 ring-white/5"
-                >
+                <div key={d.id} className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 ring-1 ring-white/5">
                   <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-xs font-black text-primary">
                       {d.isAnonymous ? "؟" : (d.supporterName || "؟").charAt(0)}
@@ -69,6 +68,9 @@ export default async function DonationGoal() {
                     <span className="text-sm font-medium text-white">
                       {d.isAnonymous || !d.supporterName ? "حامی ناشناس" : d.supporterName}
                     </span>
+                    {d.message && (
+                      <span className="text-xs text-white/40 hidden sm:inline">— {d.message}</span>
+                    )}
                   </div>
                   <div className="text-left">
                     <span className="text-sm font-bold text-primary">
