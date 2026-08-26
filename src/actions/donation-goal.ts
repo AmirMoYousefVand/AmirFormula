@@ -70,6 +70,52 @@ export async function deleteDonationGoalAction(id: string) {
   return { ok: true };
 }
 
+export async function getModeratedDonors() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("moderated_donors")
+    .select("*")
+    .order("created_at", { ascending: false });
+  return data || [];
+}
+
+export async function moderateDonorAction(
+  _prev: { error?: string; success?: string } | null,
+  formData: FormData
+): Promise<{ error?: string; success?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "دسترسی غیرمجاز" };
+
+  const donationId = parseInt(String(formData.get("donation_id") || "0"));
+  const customName = formData.get("custom_name") as string | null;
+  const customAmount = formData.get("custom_amount")
+    ? parseInt(String(formData.get("custom_amount")))
+    : null;
+  const isHidden = formData.get("is_hidden") === "on";
+
+  if (!donationId) return { error: "شناسه دونیت نامعتبر" };
+
+  const { error } = await supabase
+    .from("moderated_donors")
+    .upsert(
+      {
+        donation_id: donationId,
+        custom_name: customName?.trim() || null,
+        custom_amount: isNaN(customAmount as number) ? null : customAmount,
+        is_hidden: isHidden,
+        hidden_at: isHidden ? new Date().toISOString() : null,
+      },
+      { onConflict: "donation_id" }
+    );
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/", "layout");
+  revalidatePath("/admin/donations");
+  return { success: "تغییرات ذخیره شد" };
+}
+
 export async function getHomepageDonations(): Promise<{
   goals: { id: string; text: string; target: number; current: number; percent: number }[];
   donations: Donation[];

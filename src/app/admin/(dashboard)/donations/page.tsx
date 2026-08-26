@@ -1,8 +1,13 @@
-import { getAllDonationGoals } from "@/actions/donation-goal";
+import { getAllDonationGoals, getModeratedDonors } from "@/actions/donation-goal";
+import { getRecentDonations } from "@/actions/coffeete";
 import DonationsManager from "./donations-manager";
 
 export default async function AdminDonationsPage() {
-  const goals = await getAllDonationGoals();
+  const [goals, moderated, donations] = await Promise.all([
+    getAllDonationGoals(),
+    getModeratedDonors(),
+    getRecentDonations(),
+  ]);
 
   return (
     <div>
@@ -13,7 +18,11 @@ export default async function AdminDonationsPage() {
         </p>
       </header>
 
-      <DonationsManager initialGoals={goals} />
+      <DonationsManager
+        initialGoals={goals}
+        initialDonations={donations}
+        initialModerated={moderated}
+      />
     </div>
   );
 }
