@@ -131,11 +131,12 @@ export default function PostForm({ post, tags, selectedTagIds }: Props) {
               ))}
             </div>
 
-            {activeTab === "fa" ? (
-              <RichTextEditor value={contentFa} onChange={setContentFa} />
-            ) : (
-              <RichTextEditor value={contentEn} onChange={setContentEn} dir="ltr" />
-            )}
+            <div className={activeTab === "fa" ? "block" : "hidden"}>
+              <RichTextEditor key="editor-fa" value={contentFa} onChange={setContentFa} />
+            </div>
+            <div className={activeTab === "en" ? "block" : "hidden"}>
+              <RichTextEditor key="editor-en" value={contentEn} onChange={setContentEn} dir="ltr" />
+            </div>
           </div>
         </div>
 

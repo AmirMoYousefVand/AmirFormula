@@ -212,3 +212,23 @@ $$;
 
 revoke execute on function public.toggle_post_like(uuid, text) from anon, authenticated;
 grant execute on function public.toggle_post_like(uuid, text) to service_role;
+
+-- ============ STORAGE POLICIES ============
+-- برای اجازه آپلود عکس به باکت 'covers' برای مدیران (ادمین‌ها)
+insert into storage.buckets (id, name, public) values ('covers', 'covers', true) on conflict (id) do nothing;
+
+create policy "Cover images are publicly accessible"
+  on storage.objects for select to public
+  using ( bucket_id = 'covers' );
+
+create policy "Anyone can upload to covers"
+  on storage.objects for insert to public
+  with check ( bucket_id = 'covers' );
+
+create policy "Anyone can update covers"
+  on storage.objects for update to public
+  using ( bucket_id = 'covers' );
+
+create policy "Anyone can delete covers"
+  on storage.objects for delete to public
+  using ( bucket_id = 'covers' );
