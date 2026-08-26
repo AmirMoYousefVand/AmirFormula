@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { loginAction } from "@/actions/auth";
 
 export default function LoginForm() {
@@ -8,12 +8,38 @@ export default function LoginForm() {
     loginAction,
     null
   );
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  // Fetch logo client-side to avoid pulling server-only code into the bundle
+  useEffect(() => {
+    import("@/lib/supabase/client").then(({ createClient }) => {
+      createClient()
+        .from("site_settings")
+        .select("value")
+        .eq("key", "site_logo_url")
+        .maybeSingle()
+        .then(({ data }) => setLogoUrl(data?.value || null));
+    });
+  }, []);
 
   return (
     <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-lg ring-1 ring-silver/40">
       <div className="mb-6 text-center">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-xl font-black text-navy">
-          A
+        <div className="mx-auto mb-3 w-fit">
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl}
+              alt="لوگو"
+              width={48}
+              height={48}
+              className="rounded-full object-cover"
+            />
+          ) : (
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-xl font-black text-navy">
+              A
+            </span>
+          )}
         </div>
         <h1 className="text-xl font-black text-navy">ورود به پنل مدیریت</h1>
       </div>

@@ -19,9 +19,11 @@ const links = [
 export default function AdminSidebar({
   role,
   email,
+  logoUrl,
 }: {
   role: string;
   email: string;
+  logoUrl?: string | null;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -51,9 +53,20 @@ export default function AdminSidebar({
         }`}
       >
         <div className="flex h-16 items-center gap-2 border-b border-white/10 px-5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-black text-navy">
-            A
-          </span>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl}
+              alt="لوگو"
+              width={32}
+              height={32}
+              className="shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-black text-navy">
+              A
+            </span>
+          )}
           <div>
             <div className="text-sm font-black text-white">Amir Formula</div>
             <div className="text-xs text-white/50">پنل مدیریت</div>

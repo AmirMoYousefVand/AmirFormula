@@ -8,7 +8,7 @@ import SearchDialog from "@/components/blog/SearchDialog";
 
 const navKeys = ["home", "blog", "analytics", "contact"] as const;
 
-export default function Header() {
+export default function Header({ logoUrl }: { logoUrl?: string | null }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
@@ -18,9 +18,20 @@ export default function Header() {
       <header className="sticky top-0 z-40 bg-navy shadow-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-lg font-black text-navy">
-              A
-            </span>
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logoUrl}
+                alt="لوگو"
+                width={36}
+                height={36}
+                className="shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-black text-navy">
+                A
+              </span>
+            )}
             <span className="text-lg font-black tracking-tight text-white">
               Amir<span className="text-primary"> Formula</span>
             </span>

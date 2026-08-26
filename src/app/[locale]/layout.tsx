@@ -5,6 +5,7 @@ import { setRequestLocale } from "next-intl/server";
 import { Vazirmatn, Inter } from "next/font/google";
 import { routing } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/server";
+import { getSiteLogoUrl } from "@/components/SiteLogo";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import "../globals.css";
@@ -74,6 +75,7 @@ export default async function LocaleLayout({
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
 
+  const logoUrl = await getSiteLogoUrl();
   const dir = locale === "fa" ? "rtl" : "ltr";
 
   return (
@@ -82,9 +84,9 @@ export default async function LocaleLayout({
         className={`${vazirmatn.variable} ${inter.variable} flex min-h-screen flex-col`}
       >
         <NextIntlClientProvider>
-          <Header />
+          <Header logoUrl={logoUrl} />
           <main className="flex-1">{children}</main>
-          <Footer />
+          <Footer logoUrl={logoUrl} />
         </NextIntlClientProvider>
       </body>
     </html>

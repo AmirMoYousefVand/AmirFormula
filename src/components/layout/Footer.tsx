@@ -1,7 +1,7 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 
-export default function Footer() {
+export default function Footer({ logoUrl }: { logoUrl?: string | null }) {
   const t = useTranslations("footer");
 
   return (
@@ -9,9 +9,20 @@ export default function Footer() {
       <div className="mx-auto max-w-6xl px-4 py-10">
         <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
           <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-black text-navy">
-              A
-            </span>
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logoUrl}
+                alt="لوگو"
+                width={32}
+                height={32}
+                className="shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-black text-navy">
+                A
+              </span>
+            )}
             <span className="font-black text-white">
               Amir<span className="text-primary"> Formula</span>
             </span>

@@ -30,6 +30,49 @@ export async function compressImage(file: File): Promise<File> {
 }
 
 /**
+ * Center-crops an image to a 1:1 square, resizes it to `size`×`size`,
+ * converts to WebP, and returns a circular-masked PNG-free WebP File.
+ * Used for logos/avatars that must render cleanly as circles.
+ */
+export async function compressLogo(
+  file: File,
+  size = 256
+): Promise<{ file?: File; error?: string }> {
+  if (!file.type.startsWith("image/")) {
+    return { error: "فایل انتخابی عکس نیست" };
+  }
+
+  try {
+    const bitmap = await createImageBitmap(file);
+
+    // Center square crop
+    const side = Math.min(bitmap.width, bitmap.height);
+    const sx = (bitmap.width - side) / 2;
+    const sy = (bitmap.height - side) / 2;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas not supported");
+
+    ctx.drawImage(bitmap, sx, sy, side, side, 0, 0, size, size);
+    bitmap.close();
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/webp", 0.9)
+    );
+    if (!blob) throw new Error("WebP conversion failed");
+
+    return {
+      file: new File([blob], `${Date.now()}-logo.webp`, { type: "image/webp" }),
+    };
+  } catch (error: any) {
+    return { error: error.message || "پردازش تصویر ناموفق بود" };
+  }
+}
+
+/**
  * Uploads a file to a Supabase Storage bucket and returns the public URL.
  * Automatically compresses images to WebP before uploading.
  */

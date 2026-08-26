@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const ALLOWED_KEYS = ["site_name", "site_description", "favicon_url"];
+const ALLOWED_KEYS = ["site_name", "site_description", "favicon_url", "site_logo_url"];
 
 export async function saveSiteSettingAction(
   _prev: { error?: string; success?: string } | null,
