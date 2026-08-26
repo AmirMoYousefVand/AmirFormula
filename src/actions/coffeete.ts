@@ -28,7 +28,7 @@ export async function getRecentDonations(): Promise<Donation[]> {
         "X-API-Key": apiKey,
         "Accept": "application/json"
       },
-      next: { revalidate: 60 * 5 } // Cache for 5 minutes
+      cache: "no-store"
     });
 
     if (!res.ok) {

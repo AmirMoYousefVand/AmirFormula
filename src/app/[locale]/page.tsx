@@ -5,6 +5,8 @@ import { getFeaturedPosts, localizedTitle, localizedExcerpt } from "@/lib/querie
 import PostCard from "@/components/blog/PostCard";
 import DonationGoal from "@/components/home/DonationGoal";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage({
   params,
 }: {

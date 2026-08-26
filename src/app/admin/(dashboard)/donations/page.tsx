@@ -1,4 +1,6 @@
 import { getAllDonationGoals, getModeratedDonors } from "@/actions/donation-goal";
+
+export const dynamic = "force-dynamic";
 import { getRecentDonations } from "@/actions/coffeete";
 import DonationsManager from "./donations-manager";
 
