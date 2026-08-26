@@ -4,16 +4,14 @@ import { useState } from "react";
 import { addSocialLinkAction, updateSocialLinkAction, deleteSocialLinkAction } from "@/actions/social-links";
 import { SocialLink } from "@/types";
 import { Plus, Trash2, Edit2, Check, X, Link as LinkIcon } from "lucide-react";
-import * as LucideIcons from "lucide-react";
+import { DynamicIcon } from "@/components/ui/SocialLinks/DynamicIcon";
 
 const ICON_OPTIONS = [
-  "Github", "Twitter", "Linkedin", "Instagram", "MessageCircle", "Youtube", "Facebook", "Globe", "Mail"
+  "Telegram", "X", "Instagram", "Youtube", "Coffeete", "Github", "Linkedin", "Discord", "Dribbble", "Behance", "Medium", "WhatsApp", "Facebook", "Gitlab"
 ];
 
 function IconPreview({ name }: { name: string }) {
-  // @ts-ignore
-  const Icon = LucideIcons[name] || LucideIcons.Globe;
-  return <Icon className="w-5 h-5 text-slate-600" />;
+  return <DynamicIcon name={name} className="h-5 w-5" />;
 }
 
 export function SocialLinksManager({ initialLinks }: { initialLinks: SocialLink[] }) {
