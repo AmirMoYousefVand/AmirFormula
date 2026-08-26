@@ -2,6 +2,18 @@
 -- مایگریشن نقش‌ها: superadmin→owner, editor→author
 -- ============================================================
 
+-- حذف سیاست‌های قدیمی که به تابع is_superadmin وابسته‌اند
+DROP POLICY IF EXISTS "profiles_manage_super" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_insert_super" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_delete_super" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_manage_admin" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_insert_admin" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_delete_owner" ON public.profiles;
+
+-- حذف توابع قدیمی (حالا دیگه هیچ وابستگی نیست)
+DROP FUNCTION IF EXISTS public.is_superadmin();
+DROP FUNCTION IF EXISTS public.is_admin_or_owner();
+
 -- حذف محدودیت قدیمی
 ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
 
@@ -12,10 +24,6 @@ UPDATE public.profiles SET role = 'author' WHERE role = 'editor';
 -- محدودیت جدید
 ALTER TABLE public.profiles ADD CONSTRAINT profiles_role_check CHECK (role IN ('owner', 'admin', 'author'));
 ALTER TABLE public.profiles ALTER COLUMN role SET DEFAULT 'author';
-
--- حذف توابع قدیمی و ایجاد توابع جدید
-DROP FUNCTION IF EXISTS public.is_superadmin();
-DROP FUNCTION IF EXISTS public.is_admin_or_owner();
 
 CREATE OR REPLACE FUNCTION public.is_owner()
 RETURNS boolean
@@ -37,11 +45,7 @@ AS $$
   )
 $$;
 
--- به‌روزرسانی سیاست‌های RLS روی profiles
-DROP POLICY IF EXISTS "profiles_manage_super" ON public.profiles;
-DROP POLICY IF EXISTS "profiles_insert_super" ON public.profiles;
-DROP POLICY IF EXISTS "profiles_delete_super" ON public.profiles;
-
+-- ایجاد سیاست‌های جدید
 CREATE POLICY "profiles_manage_admin" ON public.profiles
   FOR UPDATE TO authenticated USING (public.is_admin());
 
