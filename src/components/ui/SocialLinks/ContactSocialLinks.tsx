@@ -1,5 +1,5 @@
 import { getSocialLinks } from "@/actions/social-links";
-import { DynamicIcon, getBrandColor } from "./DynamicIcon";
+import { DynamicIcon, getBrandColor, getBrandBackground } from "./DynamicIcon";
 
 export default async function ContactSocialLinks() {
   const links = await getSocialLinks();
@@ -17,7 +17,10 @@ export default async function ContactSocialLinks() {
 
       <div className="flex flex-col gap-3">
         {links.map((link) => {
-          const color = getBrandColor(link.icon_name);
+          const gradient = getBrandBackground(link.icon_name);
+          const fallback = getBrandColor(link.icon_name);
+          const bg = gradient || fallback;
+          const isGradient = !!gradient;
 
           return (
             <a
@@ -25,20 +28,19 @@ export default async function ContactSocialLinks() {
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 rounded-xl p-4 text-navy transition-all hover:scale-[1.02]"
+              className="flex items-center gap-3 rounded-xl p-4 text-white transition-all hover:scale-[1.02]"
               style={{
-                backgroundColor: color,
-                boxShadow: `0 4px 12px ${color}44`,
+                background: bg,
+                boxShadow: `0 4px 14px ${fallback}55`,
               }}
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/25 shadow-sm">
                 <DynamicIcon
                   name={link.icon_name || "Globe"}
-                  className="h-5 w-5"
-                  withColor={false}
+                  className="h-5 w-5 text-white"
                 />
               </div>
-              <span className="font-bold text-white">{link.platform}</span>
+              <span className="font-bold">{link.platform}</span>
             </a>
           );
         })}
