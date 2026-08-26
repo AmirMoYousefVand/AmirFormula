@@ -221,6 +221,11 @@ create policy "Cover images are publicly accessible"
   on storage.objects for select to public
   using ( bucket_id = 'covers' );
 
+-- اجازه لیست کردن فایل‌های باکت (برای صفحه مدیریت فضای ذخیره‌سازی)
+create policy "List cover files"
+  on storage.objects for select to public
+  using ( bucket_id = 'covers' );
+
 create policy "Anyone can upload to covers"
   on storage.objects for insert to public
   with check ( bucket_id = 'covers' );

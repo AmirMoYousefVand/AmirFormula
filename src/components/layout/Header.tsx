@@ -109,7 +109,10 @@ export default function Header({ logoUrl }: { logoUrl?: string | null }) {
         </div>
       </header>
 
-      <SearchDialog />
+      <SearchDialog
+        externalOpen={searchOpen}
+        onExternalClose={() => setSearchOpen(false)}
+      />
     </>
   );
 }

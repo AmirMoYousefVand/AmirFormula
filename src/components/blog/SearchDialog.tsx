@@ -11,7 +11,15 @@ type Result = {
   excerpt: string | null;
 };
 
-export default function SearchDialog() {
+export default function SearchDialog({
+  externalOpen,
+  onExternalClose,
+}: {
+  /** Set to true by the header button to open the dialog */
+  externalOpen?: boolean;
+  /** Called after the dialog consumes the external open signal and when it closes */
+  onExternalClose?: () => void;
+}) {
   const t = useTranslations("search");
   const locale = useLocale();
   const router = useRouter();
@@ -25,6 +33,14 @@ export default function SearchDialog() {
 
   const inputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Open when the header magnifier is clicked
+  useEffect(() => {
+    if (externalOpen) {
+      setOpen(true);
+      onExternalClose?.();
+    }
+  }, [externalOpen, onExternalClose]);
 
   const close = useCallback(() => {
     setOpen(false);

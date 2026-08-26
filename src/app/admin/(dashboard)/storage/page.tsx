@@ -1,11 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import StorageManager from "./storage-manager";
 
 export default async function AdminStoragePage() {
   const supabase = await createClient();
+  // Service-role client lists ALL files regardless of storage RLS policies
+  const adminClient = createAdminClient();
 
   const [{ data: files }, { data: posts }] = await Promise.all([
-    supabase.storage.from("covers").list(undefined, {
+    adminClient.storage.from("covers").list(undefined, {
       limit: 500,
       sortBy: { column: "created_at", order: "desc" },
     }),
