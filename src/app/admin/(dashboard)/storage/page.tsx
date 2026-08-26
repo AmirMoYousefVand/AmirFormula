@@ -15,8 +15,22 @@ export default async function AdminStoragePage() {
     supabase.from("posts").select("cover_image_url, content_fa, content_en"),
   ]);
 
+  // Files referenced in site_settings (logo, favicon) are protected system files
+  const { data: settings } = await supabase
+    .from("site_settings")
+    .select("key, value");
+
+  const systemNames = new Set<string>();
+  for (const row of settings || []) {
+    for (const match of (row.value || "").matchAll(
+      /\/storage\/v1\/object\/public\/covers\/([^"'?)\s]+)/g
+    )) {
+      systemNames.add(decodeURIComponent(match[1]));
+    }
+  }
+
   // Determine which files are referenced by any post
-  const usedNames = new Set<string>();
+  const usedNames = new Set<string>(systemNames);
   for (const post of posts || []) {
     const text = `${post.cover_image_url || ""} ${post.content_fa || ""} ${post.content_en || ""}`;
     for (const match of text.matchAll(
@@ -33,6 +47,7 @@ export default async function AdminStoragePage() {
       size: f.metadata?.size || 0,
       createdAt: f.created_at || "",
       inUse: usedNames.has(f.name),
+      isSystem: systemNames.has(f.name),
     }));
 
   const totalBytes = fileList.reduce((s, f) => s + f.size, 0);

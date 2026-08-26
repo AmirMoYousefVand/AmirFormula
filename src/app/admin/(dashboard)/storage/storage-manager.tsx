@@ -11,6 +11,7 @@ type StorageFile = {
   size: number;
   createdAt: string;
   inUse: boolean;
+  isSystem?: boolean;
 };
 
 const FREE_TIER_BYTES = 1024 * 1024 * 1024; // 1 GB
@@ -198,25 +199,36 @@ export default function StorageManager({
                   : "ring-silver/40 hover:-translate-y-0.5"
               }`}
             >
-              {/* Selection checkbox */}
-              <label className="absolute start-2 top-2 z-10 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={selected.has(file.name)}
-                  onChange={() => toggle(file.name)}
-                  className="h-5 w-5 cursor-pointer accent-[#FFC71F]"
-                />
-              </label>
+              {/* Selection checkbox — disabled for protected system files */}
+              {file.isSystem ? (
+                <span
+                  className="absolute start-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded bg-silver/40 text-[11px] text-body"
+                  title="فایل سیستمی — از بخش تنظیمات سایت قابل تغییر است"
+                >
+                  🔒
+                </span>
+              ) : (
+                <label className="absolute start-2 top-2 z-10 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(file.name)}
+                    onChange={() => toggle(file.name)}
+                    className="h-5 w-5 cursor-pointer accent-[#FFC71F]"
+                  />
+                </label>
+              )}
 
               {/* In-use badge */}
               <span
                 className={`absolute end-2 top-2 z-10 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                  file.inUse
-                    ? "bg-green-100 text-green-700"
-                    : "bg-orange-100 text-orange-700"
+                  file.isSystem
+                    ? "bg-blue-100 text-blue-700"
+                    : file.inUse
+                      ? "bg-green-100 text-green-700"
+                      : "bg-orange-100 text-orange-700"
                 }`}
               >
-                {file.inUse ? "مصرف‌شده" : "بی‌استفاده"}
+                {file.isSystem ? "لوگو / آیکون سایت" : file.inUse ? "مصرف‌شده" : "بی‌استفاده"}
               </span>
 
               <a href={fileUrl(file.name)} target="_blank" rel="noreferrer">

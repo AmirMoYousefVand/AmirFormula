@@ -66,6 +66,20 @@ export async function cleanupOrphanedFilesAction() {
   if (listError) return { error: listError.message };
   if (!files?.length) return { deleted: 0 };
 
+  // Files used by site settings (logo, favicon) must never be treated as orphans
+  const { data: settings } = await supabase
+    .from("site_settings")
+    .select("value");
+
+  const protectedFileNames = new Set<string>();
+  for (const row of settings || []) {
+    for (const match of (row.value || "").matchAll(
+      /\/storage\/v1\/object\/public\/covers\/([^"'?)\s]+)/g
+    )) {
+      protectedFileNames.add(decodeURIComponent(match[1]));
+    }
+  }
+
   // Collect every image URL referenced anywhere in posts
   const { data: posts, error: postsError } = await supabase
     .from("posts")
@@ -73,7 +87,7 @@ export async function cleanupOrphanedFilesAction() {
 
   if (postsError) return { error: postsError.message };
 
-  const usedFileNames = new Set<string>();
+  const usedFileNames = new Set<string>(protectedFileNames);
   for (const post of posts || []) {
     const haystacks = [
       post.cover_image_url || "",
