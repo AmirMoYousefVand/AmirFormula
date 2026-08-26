@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amir Formula — شماتیک معماری سایت</title>
+<style>
+  :root { --primary: #FFC71F; --navy: #1B2A4A; --navy-light: #253A61; --silver: #A7B0B7; --body: #5C6670; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; color: var(--navy); line-height: 1.7; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
+  h1 { text-align: center; font-size: 28px; margin-bottom: 8px; }
+  h1 span { color: var(--primary); }
+  .subtitle { text-align: center; color: var(--body); margin-bottom: 40px; font-size: 14px; }
+  h2 { font-size: 20px; font-weight: 800; margin: 40px 0 16px; color: var(--navy); display: flex; align-items: center; gap: 10px; }
+  h2::before { content: ''; display: inline-block; width: 6px; height: 22px; background: var(--primary); border-radius: 3px; }
+  h3 { font-size: 16px; font-weight: 700; margin: 24px 0 8px; color: var(--navy-light); }
+
+  /* Architecture Diagram */
+  .arch-diagram { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 12px rgba(0,0,0,.06); margin-bottom: 32px; overflow-x: auto; }
+  .arch-diagram svg { display: block; margin: 0 auto; }
+
+  /* Flow cards */
+  .flow { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+  .flow-step { display: flex; align-items: center; gap: 12px; background: white; border-radius: 12px; padding: 14px 18px; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+  .flow-num { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: var(--navy); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; flex-shrink: 0; }
+  .flow-content { flex: 1; }
+  .flow-content strong { color: var(--navy); }
+  .flow-content small { color: var(--body); font-size: 12px; }
+  .flow-arrow { text-align: center; color: var(--silver); font-size: 20px; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.05); margin-bottom: 24px; font-size: 13px; }
+  th { background: var(--navy); color: white; padding: 10px 14px; text-align: right; font-weight: 700; }
+  td { padding: 10px 14px; border-top: 1px solid rgba(167,176,183,.3); }
+  tr:nth-child(even) td { background: rgba(167,176,183,.06); }
+  code { font-family: Consolas, monospace; background: rgba(167,176,183,.15); padding: 1px 5px; border-radius: 4px; font-size: 12px; direction: ltr; display: inline-block; }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-yellow { background: #fef3c7; color: #92400e; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-purple { background: #f3e8ff; color: #6b21a8; }
+
+  /* Flow diagrams */
+  .box { background: white; border: 2px solid var(--navy); border-radius: 10px; padding: 10px 16px; text-align: center; font-weight: 700; font-size: 13px; }
+  .box-blue { background: #dbeafe; border-color: #3b82f6; }
+  .box-yellow { background: #fef3c7; border-color: #f59e0b; }
+  .box-green { background: #dcfce7; border-color: #22c55e; }
+  .box-red { background: #fee2e2; border-color: #ef4444; }
+  .box-purple { background: #f3e8ff; border-color: #8b5cf6; }
+  .row { display: flex; gap: 16px; justify-content: center; align-items: center; margin: 12px 0; flex-wrap: wrap; }
+  .col { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+  .arrow-down { font-size: 24px; color: var(--silver); }
+  .arrow-right { font-size: 20px; color: var(--silver); transform: rotate(90deg); }
+  .arrow-left { font-size: 20px; color: var(--silver); transform: rotate(-90deg); }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .row { flex-direction: column; align-items: center; }
+    .arrow-right, .arrow-left { transform: rotate(0); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Amir Formula — شماتیک معماری سایت</h1>
+<p class="subtitle">نحوه کار، مسیرها و ارتباطات کامل سایت (لوکال + Vercel)</p>
+
+<!-- ===== 1. نمای کلی معماری ===== -->
+<h2>۱. نمای کلی معماری (High-Level)</h2>
+
+<div class="arch-diagram">
+  <svg viewBox="0 0 900 520" width="100%" xmlns="http://www.w3.org/2000/svg">
+    <!-- User -->
+    <rect x="370" y="10" width="160" height="60" rx="12" fill="#1B2A4A"/>
+    <text x="450" y="38" text-anchor="middle" fill="white" font-size="15" font-weight="bold">👤 کاربر</text>
+    <text x="450" y="56" text-anchor="middle" fill="#A7B0B7" font-size="11">مرورگر / موبایل</text>
+
+    <!-- Arrow down -->
+    <line x1="450" y1="72" x2="450" y2="110" stroke="#A7B0B7" stroke-width="2" stroke-dasharray="5"/>
+    <polygon points="450,118 444,108 456,108" fill="#A7B0B7"/>
+    <text x="460" y="96" fill="#A7B0B7" font-size="10">HTTPS</text>
+
+    <!-- Vercel -->
+    <rect x="300" y="120" width="300" height="80" rx="12" fill="#000" stroke="#000" stroke-width="2"/>
+    <text x="450" y="148" text-anchor="middle" fill="white" font-size="16" font-weight="bold">▲ Vercel</text>
+    <text x="450" y="168" text-anchor="middle" fill="#888" font-size="11">هاستینگ رایگان · Edge Network · ISR + SSR</text>
+    <text x="450" y="184" text-anchor="middle" fill="#888" font-size="10">Next.js 15 App Router</text>
+
+    <!-- Arrows from Vercel to services -->
+    <line x1="300" y1="200" x2="120" y2="280" stroke="#3b82f6" stroke-width="2" stroke-dasharray="5"/>
+    <line x1="450" y1="200" x2="450" y2="280" stroke="#22c55e" stroke-width="2" stroke-dasharray="5"/>
+    <line x1="600" y1="200" x2="700" y2="280" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5"/>
+
+    <!-- Supabase -->
+    <rect x="30" y="280" width="180" height="90" rx="12" fill="#3ecf8e" stroke="#22c55e" stroke-width="2"/>
+    <text x="120" y="310" text-anchor="middle" fill="white" font-size="14" font-weight="bold">🟢 Supabase</text>
+    <text x="120" y="330" text-anchor="middle" fill="white" font-size="10">PostgreSQL + Auth</text>
+    <text x="120" y="348" text-anchor="middle" fill="white" font-size="10">Storage (عکس‌ها) · RLS</text>
+    <text x="120" y="364" text-anchor="middle" fill="#bbf7d0" font-size="10">رایگان: 1GB DB · 1GB Storage</text>
+
+    <!-- Supabase DB details -->
+    <rect x="30" y="385" width="180" height="130" rx="8" fill="white" stroke="#ddd"/>
+    <text x="120" y="405" text-anchor="middle" fill="#166534" font-size="11" font-weight="bold">📋 جداول دیتابیس</text>
+    <text x="120" y="422" text-anchor="middle" fill="#5C6670" font-size="10">profiles · posts · tags</text>
+    <text x="120" y="438" text-anchor="middle" fill="#5C6670" font-size="10">comments · likes</text>
+    <text x="120" y="454" text-anchor="middle" fill="#5C6670" font-size="10">donation_goals · social_links</text>
+    <text x="120" y="470" text-anchor="middle" fill="#5C6670" font-size="10">moderated_donors · site_settings</text>
+    <text x="120" y="490" text-anchor="middle" fill="#166534" font-size="10" font-weight="bold">+ RLS روی همه جداول</text>
+
+    <!-- Next.js App -->
+    <rect x="350" y="280" width="200" height="90" rx="12" fill="#1B2A4A" stroke="#1B2A4A" stroke-width="2"/>
+    <text x="450" y="310" text-anchor="middle" fill="white" font-size="14" font-weight="bold">⚡ Next.js App</text>
+    <text x="450" y="330" text-anchor="middle" fill="#A7B0B7" font-size="10">App Router · i18n · SSR/SSG</text>
+    <text x="450" y="348" text-anchor="middle" fill="#A7B0B7" font-size="10">Server Actions · API Routes</text>
+    <text x="450" y="364" text-anchor="middle" fill="#FFC71F" font-size="10">Middleware: احراز هویت + زبان</text>
+
+    <!-- Next.js details -->
+    <rect x="350" y="385" width="200" height="130" rx="8" fill="white" stroke="#ddd"/>
+    <text x="450" y="405" text-anchor="middle" fill="#1B2A4A" font-size="11" font-weight="bold">⚙️ لایه‌های Next.js</text>
+    <text x="450" y="422" text-anchor="middle" fill="#5C6670" font-size="10">Middleware (احراز + زبان)</text>
+    <text x="450" y="438" text-anchor="middle" fill="#5C6670" font-size="10">Server Components (صفحات)</text>
+    <text x="450" y="454" text-anchor="middle" fill="#5C6670" font-size="10">Client Components (تعاملی)</text>
+    <text x="450" y="470" text-anchor="middle" fill="#5C6670" font-size="10">Server Actions (فرم‌ها)</text>
+    <text x="450" y="486" text-anchor="middle" fill="#5C6670" font-size="10">API Routes (REST)</text>
+
+    <!-- Coffeete -->
+    <rect x="620" y="280" width="180" height="90" rx="12" fill="#8B5CF6" stroke="#7c3aed" stroke-width="2"/>
+    <text x="710" y="310" text-anchor="middle" fill="white" font-size="14" font-weight="bold">☕ Coffeete API</text>
+    <text x="710" y="330" text-anchor="middle" fill="white" font-size="10">حامیان مالی · لیست دونیت‌ها</text>
+    <text x="710" y="348" text-anchor="middle" fill="white" font-size="10">با API Key اختصاصی</text>
+    <text x="710" y="364" text-anchor="middle" fill="#ddd" font-size="10">API Key فقط سمت سرور</text>
+
+    <!-- Formspree -->
+    <rect x="620" y="385" width="180" height="50" rx="12" fill="#f59e0b" stroke="#d97706" stroke-width="2"/>
+    <text x="710" y="415" text-anchor="middle" fill="white" font-size="13" font-weight="bold">✉️ Formspree</text>
+
+    <!-- Vercel Cron -->
+    <rect x="620" y="450" width="180" height="50" rx="12" fill="#ef4444" stroke="#dc2626" stroke-width="2"/>
+    <text x="710" y="480" text-anchor="middle" fill="white" font-size="13" font-weight="bold">⏰ Vercel Cron (روزانه)</text>
+
+    <!-- Labels on arrows -->
+    <text x="180" y="240" fill="#3b82f6" font-size="10" font-weight="bold">REST API</text>
+    <text x="470" y="240" fill="#22c55e" font-size="10" font-weight="bold">SSR / SSG</text>
+    <text x="640" y="240" fill="#f59e0b" font-size="10" font-weight="bold">REST API</text>
+  </svg>
+</div>
+
+<!-- ===== 2. مسیر URL ها ===== -->
+<h2>۲. مسیر URL ها و نقشه سایت</h2>
+
+<table>
+  <tr><th>مسیر</th><th>نوع</th><th>توضیح</th><th>احراز هویت</th></tr>
+  <tr><td><code>/fa</code> و <code>/en</code></td><td><span class="badge badge-green">SSG</span></td><td>صفحه اصلی + لندینگ</td><td>عمومی</td></tr>
+  <tr><td><code>/fa/blog</code></td><td><span class="badge badge-green">SSG</span></td><td>لیست مقالات (صفحه‌بندی)</td><td>عمومی</td></tr>
+  <tr><td><code>/fa/blog/[slug]</code></td><td><span class="badge badge-blue">Dynamic</span></td><td>تک‌مقاله + کامنت + لایک</td><td>عمومی</td></tr>
+  <tr><td><code>/fa/blog/tag/[slug]</code></td><td><span class="badge badge-blue">Dynamic</span></td><td>فیلتر بر اساس برچسب</td><td>عمومی</td></tr>
+  <tr><td><code>/fa/analytics</code></td><td><span class="badge badge-green">SSG</span></td><td>بخش «به‌زودی» + لینک تلگرام</td><td>عمومی</td></tr>
+  <tr><td><code>/fa/contact</code></td><td><span class="badge badge-green">SSG</span></td><td>فرم تماس (Formspree)</td><td>عمومی</td></tr>
+  <tr><td><code>/admin/login</code></td><td><span class="badge badge-blue">Dynamic</span></td><td>فرم ورود ادمین</td><td>عمومی</td></tr>
+  <tr><td><code>/admin</code></td><td><span class="badge badge-blue">Dynamic</span></td><td>داشبورد آمار</td><td><span class="badge badge-red">ادمین/مالک</span></td></tr>
+  <tr><td><code>/admin/posts</code></td><td><span class="badge badge-blue">Dynamic</span></td><td>لیست مقالات</td><td><span class="badge badge-red">ادمین/مالک</span></td></tr>
+  <tr><td><code>/admin/posts/new</code></td><td><span class="badge badge-blue">Dynamic</span></td><td>نوشتن مقاله جدید</td><td><span class="badge badge-red">ادمین/مالک</span></td></tr>
+  <tr><td><code>/admin/posts/[id]/edit</code></td><td><span class="badge badge-blue">Dynamic</span></td><td>ویرایش مقاله</td><td><span class="badge badge-red">ادمین/مالک</span></td></tr>
+  <tr><td><code>/admin/comments</code></td><td><span class="badge badge-blue">Dynamic</span></td><td>مدیریت کامنت‌ها</td><td><span class="badge badge-purple">همه ادمین‌ها</span></td></tr>
+  <tr><td><code>/admin/tags</code></td><td><span class="badge badge-blue">Dynamic</span></td><td>مدیریت برچسب‌ها</td><td><span class="badge badge-purple">همه ادمین‌ها</span></td></tr>
+  <tr><td><code>/admin/settings</code></td><td><span class="badge badge-blue">Dynamic</span></td><td>تنظیمات سایت + فاوآیکون + لوگو</td><td><span class="badge badge-red">ادمین/مالک</span></td></tr>
+  <tr><td><code>/admin/settings/social-links</code></td><td><span class="badge badge-blue">Dynamic</span></td><td>مدیریت لینک‌های شبکه اجتماعی</td><td><span class="badge badge-red">ادمین/مالک</span></td></tr>
+  <tr><td><code>/admin/donations</code></td><td><span class="badge badge-blue">Dynamic</span></td><td>مدیریت اهداف حمایت + حامیان</td><td><span class="badge badge-red">ادمین/مالک</span></td></tr>
+  <tr><td><code>/admin/storage</code></td><td><span class="badge badge-blue">Dynamic</span></td><td>گالری عکس + پاکسازی</td><td><span class="badge badge-red">ادمین/مالک</span></td></tr>
+  <tr><td><code>/admin/users</code></td><td><span class="badge badge-blue">Dynamic</span></td><td>مدیریت کاربران</td><td><span class="badge badge-yellow">فقط مالک</span></td></tr>
+  <tr><td><code>/api/comments</code></td><td><span class="badge badge-blue">REST</span></td><td>ارسال کامنت (POST)</td><td>عمومی</td></tr>
+  <tr><td><code>/api/likes</code></td><td><span class="badge badge-blue">REST</span></td><td>لایک/آنلایک (GET+POST)</td><td>عمومی</td></tr>
+  <tr><td><code>/api/views/[slug]</code></td><td><span class="badge badge-blue">REST</span></td><td>شمارش بازدید (POST)</td><td>عمومی</td></tr>
+  <tr><td><code>/api/search</code></td><td><span class="badge badge-blue">REST</span></td><td>جستجو در مقالات (GET)</td><td>عمومی</td></tr>
+  <tr><td><code>/api/cron/publish-scheduled</code></td><td><span class="badge badge-red">Cron</span></td><td>انتشار خودکار مقالات زمان‌دار</td><td>CRON_SECRET</td></tr>
+  <tr><td><code>/api/optimize</code></td><td><span class="badge badge-blue">REST</span></td><td>پاکسازی کش صفحات</td><td>ادمین</td></tr>
+</table>
+
+<!-- ===== 3. جریان داده (Data Flow) ===== -->
+<h2>۳. جریان داده (Data Flow)</h2>
+
+<h3>۳.۱ جریان لود صفحه عمومی</h3>
+<div class="arch-diagram" style="padding: 24px;">
+  <div class="row">
+    <div class="box box-blue">👤 کاربر</div>
+    <span class="arrow-right">→</span>
+    <div class="box">▲ Vercel Edge</div>
+    <span class="arrow-right">→</span>
+    <div class="box box-green">Middleware</div>
+    <span class="arrow-right">→</span>
+    <div class="box box-purple">Next.js SSR/SSG</div>
+    <span class="arrow-right">→</span>
+    <div class="box box-blue">🟢 Supabase</div>
+  </div>
+  <div class="col" style="margin-top: 8px;">
+    <small style="color: var(--body);">1. کاربر URL رو ریکوئست می‌کنه → 2. Edge سرور Vercel پاسخ میده → 3. Middleware زبان رو تشخیص میده (fa/en) + اگه /admin باشه احراز هویت می‌کنه → 4. Next.js صفحه رو رندر می‌کنه (SSR) → 5. دیتابیس Supabase مقالات و کامنت‌ها رو برمی‌گردونه</small>
+  </div>
+</div>
+
+<h3>۳.۲ جریان ورود ادمین</h3>
+<div class="arch-diagram" style="padding: 24px;">
+  <div class="row">
+    <div class="box box-blue">👤 ادمین</div>
+    <span class="arrow-right">→</span>
+    <div class="box box-green">/admin/login</div>
+    <span class="arrow-right">→</span>
+    <div class="box box-purple">signInWithPassword()</div>
+    <span class="arrow-right">→</span>
+    <div class="box box-blue">🟢 Supabase Auth</div>
+  </div>
+  <div class="col" style="margin-top: 8px;">
+    <small style="color: var(--body);">1. فرم لاگین → 2. Server Action → 3. Supabase Auth → 4. JWT cookie ذخیره میشه → 5. Middleware هر درخواست بعدی رو چک میکنه</small>
+  </div>
+</div>
+
+<h3>۳.۳ جریان ارسال کامنت</h3>
+<div class="arch-diagram" style="padding: 24px;">
+  <div class="row">
+    <div class="box box-blue">👤 کاربر</div>
+    <span class="arrow-right">→</span>
+    <div class="box box-yellow">fetch(/api/comments)</div>
+    <span class="arrow-right">→</span>
+    <div class="box box-purple">Zod Validation</div>
+    <span class="arrow-right">→</span>
+    <div class="box box-green">🟢 Supabase (status: pending)</div>
+  </div>
+  <div class="col" style="margin-top: 8px;">
+    <small style="color: var(--body);">1. فرم پر میشه → 2. fingerprint ذخیره میشه (جلوگیری از فیک) → 3. اعتبارسنجی → 4. با status=pending ذخیره میشه → 5. ادمین تأیید می‌کنه → 6. نمایش</small>
+  </div>
+</div>
+
+<!-- ===== 4. نقش‌های کاربران ===== -->
+<h2>۴. نقش‌های کاربران و دسترسی‌ها</h2>
+
+<table>
+  <tr><th>بخش</th><th>مالک (Owner)</th><th>مدیر (Admin)</th><th>نویسنده (Author)</th><th>عمومی</th></tr>
+  <tr><td>صفحات عمومی</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+  <tr><td>داشبورد</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td></tr>
+  <tr><td>نوشتن/ویرایش مقاله</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td></tr>
+  <tr><td>مدیریت کامنت/برچسب</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td></tr>
+  <tr><td>تنظیمات سایت</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+  <tr><td>شبکه‌های اجتماعی</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+  <tr><td>مدیریت حمایت مالی</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+  <tr><td>فضای ذخیره‌سازی</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+  <tr><td>دعوت حذف مدیران</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr>
+</table>
+
+<!-- ===== 5. دیتابیس ===== -->
+<h2>۵. ساختار دیتابیس (Supabase)</h2>
+
+<div class="arch-diagram" style="padding: 24px;">
+  <svg viewBox="0 0 900 400" width="100%" xmlns="http://www.w3.org/2000/svg">
+    <!-- Tables -->
+    <rect x="30" y="20" width="140" height="50" rx="8" fill="#3ecf8e"/>
+    <text x="100" y="50" text-anchor="middle" fill="white" font-size="12" font-weight="bold">profiles</text>
+
+    <rect x="200" y="20" width="140" height="50" rx="8" fill="#3ecf8e"/>
+    <text x="270" y="50" text-anchor="middle" fill="white" font-size="12" font-weight="bold">posts</text>
+
+    <rect x="370" y="20" width="140" height="50" rx="8" fill="#3ecf8e"/>
+    <text x="440" y="50" text-anchor="middle" fill="white" font-size="12" font-weight="bold">tags</text>
+
+    <rect x="540" y="20" width="140" height="50" rx="8" fill="#3ecf8e"/>
+    <text x="610" y="50" text-anchor="middle" fill="white" font-size="12" font-weight="bold">comments</text>
+
+    <rect x="710" y="20" width="140" height="50" rx="8" fill="#3ecf8e"/>
+    <text x="780" y="50" text-anchor="middle" fill="white" font-size="12" font-weight="bold">likes</text>
+
+    <!-- Second row -->
+    <rect x="30" y="100" width="140" height="50" rx="8" fill="#f59e0b"/>
+    <text x="100" y="130" text-anchor="middle" fill="white" font-size="12" font-weight="bold">site_settings</text>
+
+    <rect x="200" y="100" width="140" height="50" rx="8" fill="#f59e0b"/>
+    <text x="270" y="130" text-anchor="middle" fill="white" font-size="12" font-weight="bold">social_links</text>
+
+    <rect x="370" y="100" width="140" height="50" rx="8" fill="#8b5cf6"/>
+    <text x="440" y="130" text-anchor="middle" fill="white" font-size="12" font-weight="bold">donation_goals</text>
+
+    <rect x="540" y="100" width="140" height="50" rx="8" fill="#8b5cf6"/>
+    <text x="610" y="130" text-anchor="middle" fill="white" font-size="12" font-weight="bold">moderated_donors</text>
+
+    <rect x="710" y="100" width="140" height="50" rx="8" fill="#ef4444"/>
+    <text x="780" y="130" text-anchor="middle" fill="white" font-size="12" font-weight="bold">post_tags</text>
+
+    <!-- Relationships -->
+    <text x="100" y="200" text-anchor="middle" fill="#5C6670" font-size="10">posts.author_id → profiles.id</text>
+    <text x="270" y="200" text-anchor="middle" fill="#5C6670" font-size="10">comments.post_id → posts.id</text>
+    <text x="440" y="200" text-anchor="middle" fill="#5C6670" font-size="10">likes.post_id → posts.id</text>
+    <text x="610" y="200" text-anchor="middle" fill="#5C6670" font-size="10">comments.parent_id → comments.id</text>
+    <text x="270" y="230" text-anchor="middle" fill="#5C6670" font-size="10">post_tags.post_id → posts.id</text>
+    <text x="440" y="230" text-anchor="middle" fill="#5C6670" font-size="10">post_tags.tag_id → tags.id</text>
+
+    <!-- RLS badge -->
+    <rect x="30" y="280" width="840" height="50" rx="8" fill="#1B2A4A"/>
+    <text x="450" y="310" text-anchor="middle" fill="#FFC71F" font-size="13" font-weight="bold">🔒 Row Level Security (RLS) روی همه جداول فعال است</text>
+    <text x="450" y="340" text-anchor="middle" fill="#A7B0B7" font-size="10">عمومی: فقط خواندن | ادمین: خواندن/نوشتن | سوپرادمین: حذف</text>
+  </svg>
+</div>
+
+<!-- ===== 6. امنیت ===== -->
+<h2>۶. لایه‌های امنیتی</h2>
+
+<table>
+  <tr><th>لایه</th><th>مکانیزم</th><th>توضیح</th></tr>
+  <tr><td>احراز هویت</td><td>Supabase Auth + JWT</td><td>توکن سمت سرور اعتبارسنجی میشه</td></tr>
+  <tr><td>دسترسی</td><td>Row Level Security</td><td>هر جدول سیاست خودش رو داره</td></tr>
+  <tr><td>CSRF</td><td>Server Actions</td><td>محافظت خودکار Next.js</td></tr>
+  <tr><td>XSS</td><td>rehype-sanitize</td><td>Markdown بدون اسکریپت خطرناک</td></tr>
+  <tr><td>Validation</td><td>Zod</td><td>اعتبارسنجی همه ورودی‌ها</td></tr>
+  <tr><td>Spam</td><td>Honeypot + Fingerprint</td><td>جلوگیری از ربات‌ها</td></tr>
+  <tr><td>Cron</td><td>Bearer Token</td><td> محافظت endpoint کرن</td></tr>
+</table>
+
+<!-- ===== 7. Local vs Vercel ===== -->
+<h2>۷. مقایسه لوکال‌هاست vs Vercel</h2>
+
+<table>
+  <tr><th>ویژگی</th><th>لوکال‌هاست (dev)</th><th>Vercel (هاست رایگان)</th></tr>
+  <tr><td>آدرس</td><td><code>localhost:3000</code></td><td><code>amir-formula.vercel.app</code></td></tr>
+  <tr><td>نوع سرور</td><td>Node.js (Next.js dev server)</td><td>Serverless Functions + Edge</td></tr>
+  <tr><td>SSR</td><td>در هر درخواست</td><td>فقط در صفحات Dynamic</td></tr>
+  <tr><td>SSG</td><td>در زمان بیلد</td><td>در زمان بیلد + ISR</td></tr>
+  <tr><td>Cron</td><td>غیرفعال</td><td>روزانه ساعت ۳ بامداد</td></tr>
+  <tr><td> HTTPS</td><td>HTTP (localhost)</td><td>HTTPS خودکار</td></tr>
+  <tr><td> سرعت</td><td>بطئی‌تر (dev mode)</td><td>بسیار سریع (Edge network)</td></tr>
+  <tr><td> محیط متغیرها</td><td>.env.local</td><td>Vercel Dashboard</td></tr>
+  <tr><td> عکس‌ها</td><td>مستقیم از مرورگر</td><td>تصحیح خودکار اندازه/فرمت</td></tr>
+  <tr><td> جستجو</td><td>از هاست محلی</td><td>edge-cached</td></tr>
+</table>
+
+<div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 12px; padding: 16px; margin-top: 24px;">
+  <strong style="color: #92400e;">⚠️ نکته مهم:</strong>
+  <p style="color: #92400e; font-size: 13px; margin-top: 4px;">
+    فایل <code>.env.local</code> فقط در لوکال‌هاست کار می‌کنه. برای Vercel، متغیرها را از طریق Dashboard > Settings > Environment Variables وارد کنید. <strong>SUPABASE_SERVICE_ROLE_KEY</strong> و <strong>CRON_SECRET</strong> هرگز در گیت قرار نگیرند!
+  </p>
+</div>
+
+</div>
+</body>
+</html>
