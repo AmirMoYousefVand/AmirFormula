@@ -65,12 +65,16 @@ export default async function DonationGoal() {
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-xs font-black text-primary">
                       {d.isAnonymous ? "؟" : (d.supporterName || "؟").charAt(0)}
                     </div>
-                    <span className="text-sm font-medium text-white">
-                      {d.isAnonymous || !d.supporterName ? "حامی ناشناس" : d.supporterName}
-                    </span>
-                    {d.message && (
-                      <span className="text-xs text-white/40 hidden sm:inline">— {d.message}</span>
-                    )}
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-sm font-medium text-white">
+                        {d.isAnonymous || !d.supporterName ? "حامی ناشناس" : d.supporterName}
+                      </span>
+                      {d.message && (
+                        <span className="text-xs text-white/50 max-w-[200px] truncate sm:max-w-[300px]">
+                          "{d.message}"
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="text-left">
                     <span className="text-sm font-bold text-primary">

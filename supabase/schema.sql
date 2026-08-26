@@ -282,6 +282,7 @@ create table if not exists public.moderated_donors (
   id uuid primary key default gen_random_uuid(),
   donation_id integer not null unique,
   custom_name text,
+  custom_message text,
   custom_amount integer,
   is_hidden boolean not null default false,
   hidden_at timestamptz,

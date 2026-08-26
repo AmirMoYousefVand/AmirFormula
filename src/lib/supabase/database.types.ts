@@ -204,6 +204,7 @@ export type Database = {
           id: string;
           donation_id: number;
           custom_name: string | null;
+          custom_message: string | null;
           custom_amount: number | null;
           is_hidden: boolean;
           hidden_at: string | null;
@@ -213,6 +214,7 @@ export type Database = {
           id?: string;
           donation_id: number;
           custom_name?: string | null;
+          custom_message?: string | null;
           custom_amount?: number | null;
           is_hidden?: boolean;
           hidden_at?: string | null;
@@ -222,6 +224,7 @@ export type Database = {
           id?: string;
           donation_id?: number;
           custom_name?: string | null;
+          custom_message?: string | null;
           custom_amount?: number | null;
           is_hidden?: boolean;
           hidden_at?: string | null;

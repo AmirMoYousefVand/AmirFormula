@@ -22,6 +22,7 @@ type Donation = {
 type ModeratedDonor = {
   donation_id: number;
   custom_name: string | null;
+  custom_message: string | null;
   custom_amount: number | null;
   is_hidden: boolean;
 };
@@ -255,6 +256,11 @@ function DonorModerationSection({
                         <input name="custom_amount" type="number" defaultValue={mod?.custom_amount ?? d.amountToman} dir="ltr"
                           className="w-full rounded-lg border border-silver/50 px-3 py-2 text-sm outline-none focus:border-primary" />
                       </div>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-bold text-navy">پیام</label>
+                      <input name="custom_message" defaultValue={mod?.custom_message ?? d.message ?? ""} placeholder="پیام حامی..."
+                        className="w-full rounded-lg border border-silver/50 px-3 py-2 text-sm outline-none focus:border-primary" />
                     </div>
 
                     <div className="flex items-center gap-3">

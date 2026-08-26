@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, unstable_noStore as noStore } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getRecentDonations, type Donation } from "./coffeete";
 
@@ -89,6 +89,7 @@ export async function moderateDonorAction(
 
   const donationId = parseInt(String(formData.get("donation_id") || "0"));
   const customName = formData.get("custom_name") as string | null;
+  const customMessage = formData.get("custom_message") as string | null;
   const customAmount = formData.get("custom_amount")
     ? parseInt(String(formData.get("custom_amount")))
     : null;
@@ -102,6 +103,7 @@ export async function moderateDonorAction(
       {
         donation_id: donationId,
         custom_name: customName?.trim() || null,
+        custom_message: customMessage?.trim() || null,
         custom_amount: isNaN(customAmount as number) ? null : customAmount,
         is_hidden: isHidden,
         hidden_at: isHidden ? new Date().toISOString() : null,
@@ -120,6 +122,9 @@ export async function getHomepageDonations(): Promise<{
   goals: { id: string; text: string; target: number; current: number; percent: number }[];
   donations: Donation[];
 }> {
+  // Bypass fetch cache so moderated data is always fresh
+  noStore();
+
   try {
     const supabase = await createClient();
 
@@ -134,12 +139,13 @@ export async function getHomepageDonations(): Promise<{
     const moderated = moderatedData.data || [];
 
     // Build moderation map: donation_id -> moderator override
-    const modMap = new Map<number, { custom_name: string | null; custom_amount: number | null; is_hidden: boolean }>();
+    const modMap = new Map<number, { custom_name: string | null; custom_amount: number | null; is_hidden: boolean; custom_message: string | null }>();
     for (const m of moderated as Record<string, unknown>[]) {
       modMap.set(m.donation_id as number, {
         custom_name: m.custom_name as string | null,
         custom_amount: m.custom_amount as number | null,
         is_hidden: m.is_hidden as boolean,
+        custom_message: m.custom_message as string | null,
       });
     }
 
@@ -152,6 +158,7 @@ export async function getHomepageDonations(): Promise<{
           ...d,
           supporterName: mod?.custom_name ?? d.supporterName,
           amountToman: mod?.custom_amount ?? d.amountToman,
+          message: mod?.custom_message ?? d.message,
         };
       })
       .filter((d): d is Donation => d !== null);
