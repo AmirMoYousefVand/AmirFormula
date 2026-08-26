@@ -67,7 +67,7 @@ export default async function DonationGoal() {
                     </div>
                     <div className="flex flex-col gap-0.5">
                       <span className="text-sm font-medium text-white">
-                        {d.isAnonymous || !d.supporterName ? "حامی ناشناس" : d.supporterName}
+                        {d.supporterName || (d.isAnonymous ? "حامی ناشناس" : "حامی")}
                       </span>
                       {d.message && (
                         <span className="text-xs text-white/50 max-w-[200px] truncate sm:max-w-[300px]">

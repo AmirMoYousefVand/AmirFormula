@@ -214,19 +214,11 @@ function DonorModerationSection({
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-sm font-black text-primary">
-                      {mod?.custom_name
-                        ? mod.custom_name.charAt(0)
-                        : d.isAnonymous
-                          ? "؟"
-                          : (d.supporterName || "؟").charAt(0)}
+                      {d.supporterName ? d.supporterName.charAt(0) : "؟"}
                     </div>
                     <div>
                       <p className="text-sm font-bold text-navy">
-                        {mod?.custom_name
-                          ? mod.custom_name
-                          : d.isAnonymous || !d.supporterName
-                            ? "حامی ناشناس"
-                            : d.supporterName}
+                        {d.supporterName || (d.isAnonymous ? "حامی ناشناس" : "حامی")}
                       </p>
                       <p className="text-xs text-body">
                         {(mod?.custom_amount ?? d.amountToman).toLocaleString("en-US")} تومان
