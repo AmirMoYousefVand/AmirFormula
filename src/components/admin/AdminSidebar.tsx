@@ -4,12 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { logoutAction } from "@/actions/auth";
+import AdminCommandPalette from "./AdminCommandPalette";
 
 const links = [
   { href: "/admin", label: "داشبورد", icon: "📊", exact: true },
   { href: "/admin/posts", label: "مقالات", icon: "📝" },
   { href: "/admin/comments", label: "نظرات", icon: "💬" },
   { href: "/admin/tags", label: "برچسب‌ها", icon: "🏷" },
+  { href: "/admin/storage", label: "فضای ذخیره‌سازی", icon: "💾" },
+  { href: "/admin/settings", label: "تنظیمات سایت", icon: "⚙️" },
   { href: "/admin/users", label: "مدیران", icon: "👥", superadminOnly: true },
 ];
 
@@ -22,9 +25,12 @@ export default function AdminSidebar({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   return (
     <>
+      <AdminCommandPalette />
+
       {/* Mobile topbar */}
       <div className="fixed inset-x-0 top-0 z-30 flex items-center justify-between bg-navy px-4 py-3 lg:hidden">
         <span className="font-black text-white">پنل مدیریت</span>
@@ -55,6 +61,15 @@ export default function AdminSidebar({
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto p-4">
+          {/* Command palette trigger */}
+          <button
+            onClick={() => setPaletteOpen(true)}
+            className="mb-3 flex w-full items-center justify-between rounded-lg bg-white/5 px-4 py-2 text-xs text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <span>جستجوی سریع...</span>
+            <kbd className="rounded border border-white/20 px-1.5 py-0.5 text-[10px]">Ctrl K</kbd>
+          </button>
+
           {links.map((link) => {
             if (link.superadminOnly && role !== "superadmin") return null;
 

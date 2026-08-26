@@ -4,6 +4,7 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { Vazirmatn, Inter } from "next/font/google";
 import { routing } from "@/i18n/routing";
+import { createClient } from "@/lib/supabase/server";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import "../globals.css";
@@ -20,14 +21,43 @@ const inter = Inter({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "Amir Formula — تحلیل فرمول ۱",
-    template: "%s | Amir Formula",
-  },
-  description:
-    "مقالات و تحلیل‌های داده‌محور دنیای فرمول ۱ — F1 articles and data-driven analysis",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  try {
+    const supabase = await createClient();
+    const { data: rows } = await supabase
+      .from("site_settings")
+      .select("key, value");
+
+    const settings: Record<string, string> = {};
+    for (const row of rows || []) {
+      if (row.value) settings[row.key] = row.value;
+    }
+
+    const siteName = settings.site_name || "Amir Formula";
+
+    return {
+      title: {
+        default: `${siteName} — تحلیل فرمول ۱`,
+        template: `%s | ${siteName}`,
+      },
+      description:
+        settings.site_description ||
+        "مقالات و تحلیل‌های داده‌محور دنیای فرمول ۱ — F1 articles and data-driven analysis",
+      icons: settings.favicon_url
+        ? { icon: settings.favicon_url }
+        : undefined,
+    };
+  } catch {
+    return {
+      title: {
+        default: "Amir Formula — تحلیل فرمول ۱",
+        template: "%s | Amir Formula",
+      },
+      description:
+        "مقالات و تحلیل‌های داده‌محور دنیای فرمول ۱ — F1 articles and data-driven analysis",
+    };
+  }
+}
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));

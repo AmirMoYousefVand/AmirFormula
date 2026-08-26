@@ -168,6 +168,24 @@ export type Database = {
           created_at?: string;
         };
       };
+      site_settings: {
+        Relationships: [];
+        Row: {
+          key: string;
+          value: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          key: string;
+          value?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          key?: string;
+          value?: string | null;
+          updated_at?: string;
+        };
+      };
       likes: {
         Relationships: [];
         Row: {

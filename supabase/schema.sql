@@ -232,3 +232,18 @@ create policy "Anyone can update covers"
 create policy "Anyone can delete covers"
   on storage.objects for delete to public
   using ( bucket_id = 'covers' );
+
+-- ============ SITE SETTINGS (تنظیمات سایت) ============
+create table if not exists public.site_settings (
+  key text primary key,
+  value text,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.site_settings enable row level security;
+
+create policy "settings_read_public" on public.site_settings
+  for select using (true);
+
+create policy "settings_write_admin" on public.site_settings
+  for all to authenticated using (true) with check (true);
