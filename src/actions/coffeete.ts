@@ -23,7 +23,7 @@ export async function getRecentDonations(): Promise<Donation[]> {
   }
 
   try {
-    const res = await fetch("https://www.coffeete.ir/api/v1/me/donations?page=1&pageSize=5", {
+    const res = await fetch(`https://www.coffeete.ir/api/v1/me/donations?page=1&pageSize=5&_t=${Math.floor(Date.now() / 1000)}`, {
       headers: {
         "X-API-Key": apiKey,
         "Accept": "application/json"

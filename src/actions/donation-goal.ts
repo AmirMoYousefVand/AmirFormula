@@ -139,7 +139,6 @@ export async function getHomepageDonations(): Promise<{
     const moderated = moderatedData.data || [];
 
     // Build moderation map: donation_id -> moderator override
-    // Use string keys because API ids may arrive as strings
     const modMap = new Map<string, { custom_name: string | null; custom_amount: number | null; is_hidden: boolean; custom_message: string | null }>();
     for (const m of moderated as Record<string, unknown>[]) {
       modMap.set(String(m.donation_id), {
@@ -151,6 +150,7 @@ export async function getHomepageDonations(): Promise<{
     }
 
     // Process donations: apply moderation, filter hidden
+    // d.id from API might be number or string, always convert to String for lookup
     const processedDonations = donations
       .map((d) => {
         const mod = modMap.get(String(d.id));
