@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import FooterSocialLinks from "@/components/ui/SocialLinks/FooterSocialLinks";
+import EditableText from "@/components/ui/EditableText";
 
 export default function Footer({ logoUrl }: { logoUrl?: string | null }) {
   const t = useTranslations("footer");
@@ -44,7 +45,8 @@ export default function Footer({ logoUrl }: { logoUrl?: string | null }) {
         </div>
 
         <div className="mt-8 border-t border-white/10 pt-6 text-center text-xs text-white/50">
-          © {new Date().getFullYear()} Amir Formula — {t("rights")}
+          © {new Date().getFullYear()} Amir Formula —{" "}
+          <EditableText namespace="footer" tKey="rights" text={t("rights")} as="span" />
         </div>
       </div>
     </footer>

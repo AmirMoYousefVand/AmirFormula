@@ -3,6 +3,7 @@ import { setRequestLocale, getTranslations } from "next-intl/server";
 import { getPublishedPosts, localizedTitle, localizedExcerpt } from "@/lib/queries";
 import PostCard from "@/components/blog/PostCard";
 import Pagination from "@/components/ui/Pagination";
+import EditableText from "@/components/ui/EditableText";
 
 export async function generateMetadata({
   params,
@@ -32,10 +33,20 @@ export default async function BlogPage({
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
       <header className="mb-10">
-        <h1 className="mb-2 text-3xl font-black text-navy md:text-4xl">
-          {t("title")}
-        </h1>
-        <p className="text-body">{t("subtitle")}</p>
+        <EditableText
+          namespace="blog"
+          tKey="title"
+          text={t("title")}
+          as="h1"
+          className="mb-2 text-3xl font-black text-navy md:text-4xl"
+        />
+        <EditableText
+          namespace="blog"
+          tKey="subtitle"
+          text={t("subtitle")}
+          as="p"
+          className="text-body"
+        />
       </header>
 
       {posts.length === 0 ? (

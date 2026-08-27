@@ -41,11 +41,14 @@ export default function EditableText({
     }
   };
 
+  const dir = locale === "fa" ? "rtl" : "ltr";
+
   return (
     <Tag
       className={`${className} cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all ${
         isEditing ? "ring-2 ring-primary" : ""
       } ${saving ? "opacity-50" : ""}`}
+      dir={dir}
       contentEditable
       suppressContentEditableWarning
       onFocus={() => setIsEditing(true)}

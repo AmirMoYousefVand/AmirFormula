@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { setRequestLocale, getTranslations } from "next-intl/server";
+import EditableText from "@/components/ui/EditableText";
 
 export async function generateMetadata({
   params,
@@ -28,11 +29,21 @@ export default async function AnalyticsPage({
         {t("badge")}
       </span>
 
-      <h1 className="mb-4 text-3xl font-black text-navy md:text-4xl">
-        {t("title")}
-      </h1>
+      <EditableText
+        namespace="analytics"
+        tKey="title"
+        text={t("title")}
+        as="h1"
+        className="mb-4 text-3xl font-black text-navy md:text-4xl"
+      />
 
-      <p className="mx-auto mb-12 max-w-2xl text-body">{t("subtitle")}</p>
+      <EditableText
+        namespace="analytics"
+        tKey="subtitle"
+        text={t("subtitle")}
+        as="p"
+        className="mx-auto mb-12 max-w-2xl text-body"
+      />
 
       {/* Feature cards */}
       <div className="mb-12 grid gap-4 sm:grid-cols-2">

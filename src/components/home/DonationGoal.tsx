@@ -1,5 +1,6 @@
 import { Coffee } from "lucide-react";
 import { getHomepageDonations } from "@/actions/donation-goal";
+import EditableText from "@/components/ui/EditableText";
 
 export default async function DonationGoal() {
   const { goals, donations } = await getHomepageDonations();
@@ -13,13 +14,20 @@ export default async function DonationGoal() {
 
       <div className="relative mx-auto max-w-6xl px-4 py-16">
         <div className="text-center">
-          <h2 className="mb-3 flex items-center justify-center gap-3 text-2xl font-black text-white md:text-3xl">
-            <Coffee className="h-7 w-7 text-primary" />
-            حامی من باشید
-          </h2>
-          <p className="mb-8 text-white/60">
-            حمایت شما به ادامه توسعه این سایت کمک می‌کند
-          </p>
+          <EditableText
+            namespace="home"
+            tKey="ctaBlog"
+            text="حامی من باشید"
+            as="h2"
+            className="mb-3 text-2xl font-black text-white md:text-3xl flex items-center justify-center gap-3"
+          />
+          <EditableText
+            namespace="home"
+            tKey="heroSubtitle"
+            text="حمایت شما به ادامه توسعه این سایت کمک می‌کند"
+            as="p"
+            className="mb-8 text-white/60"
+          />
         </div>
 
         {/* Goals */}
@@ -55,9 +63,13 @@ export default async function DonationGoal() {
         {/* Recent donations */}
         {donations.length > 0 && (
           <div className="mx-auto mb-8 max-w-xl">
-            <h3 className="mb-4 text-center text-sm font-bold text-white/70">
-              حامیان اخیر
-            </h3>
+            <EditableText
+              namespace="home"
+              tKey="featuredAll"
+              text="حامیان اخیر"
+              as="h3"
+              className="mb-4 text-center text-sm font-bold text-white/70"
+            />
             <div className="space-y-2">
               {donations.map((d) => (
                 <div key={d.id} className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 ring-1 ring-white/5">
@@ -96,7 +108,12 @@ export default async function DonationGoal() {
             className="inline-flex items-center gap-2 rounded-full bg-primary px-8 py-3 text-sm font-black text-navy transition-all hover:scale-105 hover:bg-primary-hover"
           >
             <Coffee className="h-5 w-5" />
-            حامی من باشید
+            <EditableText
+              namespace="home"
+              tKey="ctaAnalytics"
+              text="حامی من باشید"
+              as="span"
+            />
           </a>
         </div>
       </div>
