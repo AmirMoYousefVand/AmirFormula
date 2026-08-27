@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import LanguageSwitcher from "./LanguageSwitcher";
 import SearchDialog from "@/components/blog/SearchDialog";
+import EditableText from "@/components/ui/EditableText";
 import { Coffee } from "lucide-react";
 
 const navKeys = ["home", "blog", "analytics", "contact"] as const;
@@ -59,7 +60,7 @@ export default function Header({ logoUrl }: { logoUrl?: string | null }) {
                       : "text-white/80 hover:bg-white/5 hover:text-white"
                   }`}
                 >
-                  {t(key)}
+                  <EditableText namespace="nav" tKey={key} text={t(key)} as="span" />
                 </Link>
               );
             })}
@@ -70,7 +71,7 @@ export default function Header({ logoUrl }: { logoUrl?: string | null }) {
               className="ml-2 flex items-center gap-1.5 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
             >
               <Coffee className="h-4 w-4" />
-              <span>حامی من باش</span>
+              <EditableText namespace="nav" tKey="home" text="حامی من باش" as="span" />
             </a>
           </nav>
 
@@ -119,7 +120,7 @@ export default function Header({ logoUrl }: { logoUrl?: string | null }) {
                       href={href}
                       className="block px-4 py-2.5 text-sm text-white/85 hover:bg-white/10 hover:text-primary"
                     >
-                      {t(key)}
+                      <EditableText namespace="nav" tKey={key} text={t(key)} as="span" />
                     </Link>
                   );
                 })}

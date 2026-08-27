@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useEditMode } from "./EditModeProvider";
 import { useLocale } from "next-intl";
 import { updateTranslationAction } from "@/actions/translations";
@@ -25,36 +25,51 @@ export default function EditableText({
   const [isEditing, setIsEditing] = useState(false);
   const [currentText, setCurrentText] = useState(text);
   const [saving, setSaving] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const fullKey = `${namespace}.${tKey}`;
+
+  const handleBlur = useCallback(async () => {
+    setIsEditing(false);
+    const newText = ref.current?.textContent || "";
+    if (newText !== text) {
+      setCurrentText(newText);
+      setSaving(true);
+      await updateTranslationAction(fullKey, locale, newText);
+      setSaving(false);
+    }
+  }, [text, fullKey, locale]);
 
   if (!isEditMode) {
     return <Tag className={className}>{currentText}</Tag>;
   }
 
-  const fullKey = `${namespace}.${tKey}`;
-
-  const handleBlur = async () => {
-    setIsEditing(false);
-    if (currentText !== text) {
-      setSaving(true);
-      await updateTranslationAction(fullKey, locale, currentText);
-      setSaving(false);
-    }
-  };
-
-  const dir = locale === "fa" ? "rtl" : "ltr";
-
   return (
-    <Tag
-      className={`${className} cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all ${
+    <div
+      className={`${className} inline-block cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all relative ${
         isEditing ? "ring-2 ring-primary" : ""
       } ${saving ? "opacity-50" : ""}`}
-      dir={dir}
-      contentEditable
-      suppressContentEditableWarning
-      onFocus={() => setIsEditing(true)}
-      onBlur={handleBlur}
-      dangerouslySetInnerHTML={{ __html: currentText }}
-      onInput={(e) => setCurrentText((e.target as HTMLElement).textContent || "")}
-    />
+    >
+      {saving && (
+        <span className="absolute -top-6 left-0 text-[10px] text-primary font-bold">
+          ذخیره شد ✓
+        </span>
+      )}
+      <div
+        ref={ref}
+        contentEditable
+        suppressContentEditableWarning
+        dir={locale === "fa" ? "rtl" : "ltr"}
+        style={{
+          unicodeBidi: "plaintext",
+          textAlign: locale === "fa" ? "right" : "left",
+          minHeight: "1em",
+          outline: "none",
+        }}
+        onFocus={() => setIsEditing(true)}
+        onBlur={handleBlur}
+        dangerouslySetInnerHTML={{ __html: currentText }}
+      />
+    </div>
   );
 }
