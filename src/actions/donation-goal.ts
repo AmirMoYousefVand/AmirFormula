@@ -2,6 +2,7 @@
 
 import { revalidatePath, unstable_noStore as noStore } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logInfo, logError } from "@/lib/logger";
 import { getRecentDonations, type Donation } from "./coffeete";
 
 export async function getDonationGoals() {
@@ -44,12 +45,20 @@ export async function saveDonationGoalAction(
       .from("donation_goals")
       .update({ goal_text: goalText, target_amount: targetAmount, sort_order: sortOrder, is_active: isActive, updated_at: new Date().toISOString() })
       .eq("id", id);
-    if (error) return { error: error.message };
+    if (error) {
+      await logError("UPDATE_DONATION_GOAL_FAILED", { error: error.message, id }, user.id);
+      return { error: error.message };
+    }
+    await logInfo("DONATION_GOAL_UPDATED", { goalText, targetAmount, id }, user.id);
   } else {
     const { error } = await supabase
       .from("donation_goals")
       .insert({ goal_text: goalText, target_amount: targetAmount, sort_order: sortOrder, is_active: isActive });
-    if (error) return { error: error.message };
+    if (error) {
+      await logError("CREATE_DONATION_GOAL_FAILED", { error: error.message, goalText }, user.id);
+      return { error: error.message };
+    }
+    await logInfo("DONATION_GOAL_CREATED", { goalText, targetAmount }, user.id);
   }
 
   revalidatePath("/", "layout");
@@ -63,7 +72,12 @@ export async function deleteDonationGoalAction(id: string) {
   if (!user) return { error: "دسترسی غیرمجاز" };
 
   const { error } = await supabase.from("donation_goals").delete().eq("id", id);
-  if (error) return { error: error.message };
+  if (error) {
+    await logError("DELETE_DONATION_GOAL_FAILED", { error: error.message, id }, user.id);
+    return { error: error.message };
+  }
+
+  await logInfo("DONATION_GOAL_DELETED", { id }, user.id);
 
   revalidatePath("/", "layout");
   revalidatePath("/admin/donations");
@@ -111,7 +125,12 @@ export async function moderateDonorAction(
       { onConflict: "donation_id" }
     );
 
-  if (error) return { error: error.message };
+  if (error) {
+    await logError("MODERATE_DONOR_FAILED", { error: error.message, donationId }, user.id);
+    return { error: error.message };
+  }
+
+  await logInfo("DONOR_MODERATED", { donationId, customName, isHidden }, user.id);
 
   revalidatePath("/", "layout");
   revalidatePath("/admin/donations");

@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { postSchema } from "@/lib/validation";
 import { slugify } from "@/lib/utils";
 
+import { logInfo, logError } from "@/lib/logger";
+
 function makeSlug(text: string): string {
   return slugify(text) || `post-${Date.now()}`;
 }
@@ -90,7 +92,10 @@ export async function savePostAction(
       .from("posts")
       .update(postData)
       .eq("id", data.id);
-    if (error) return { error: error.message };
+    if (error) {
+      await logError("UPDATE_POST_FAILED", { error: error.message, postId: data.id }, user.id);
+      return { error: error.message };
+    }
 
     // Replace tags
     await supabase.from("post_tags").delete().eq("post_id", data.id);
@@ -99,6 +104,7 @@ export async function savePostAction(
         .from("post_tags")
         .insert(tag_ids.map((tid) => ({ post_id: data.id!, tag_id: tid })));
     }
+    await logInfo("POST_UPDATED", { title: data.title_fa, slug, postId: data.id }, user.id);
   } else {
     // Insert
     const { data: newPost, error } = await supabase
@@ -106,13 +112,17 @@ export async function savePostAction(
       .insert(postData)
       .select("id")
       .single();
-    if (error) return { error: error.message };
+    if (error) {
+      await logError("CREATE_POST_FAILED", { error: error.message, title: data.title_fa }, user.id);
+      return { error: error.message };
+    }
 
     if (tag_ids.length) {
       await supabase
         .from("post_tags")
         .insert(tag_ids.map((tid) => ({ post_id: newPost.id, tag_id: tid })));
     }
+    await logInfo("POST_CREATED", { title: data.title_fa, slug, postId: newPost.id }, user.id);
   }
 
   revalidatePath("/admin/posts");
@@ -123,8 +133,15 @@ export async function savePostAction(
 
 export async function deletePostAction(postId: string) {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   const { error } = await supabase.from("posts").delete().eq("id", postId);
-  if (error) return { error: error.message };
+  if (error) {
+    await logError("DELETE_POST_FAILED", { error: error.message, postId }, user?.id);
+    return { error: error.message };
+  }
+
+  await logInfo("POST_DELETED", { postId }, user?.id);
 
   revalidatePath("/admin/posts");
   revalidatePath("/fa/blog");

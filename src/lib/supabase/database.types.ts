@@ -282,6 +282,54 @@ export type Database = {
           updated_at?: string;
         };
       };
+      translation_overrides: {
+        Relationships: [];
+        Row: {
+          key: string;
+          locale: string;
+          value: string;
+          updated_at: string;
+        };
+        Insert: {
+          key: string;
+          locale: string;
+          value: string;
+          updated_at?: string;
+        };
+        Update: {
+          key?: string;
+          locale?: string;
+          value?: string;
+          updated_at?: string;
+        };
+      };
+      system_logs: {
+        Relationships: [];
+        Row: {
+          id: string;
+          level: "info" | "warn" | "error";
+          action: string;
+          details: Json | null;
+          user_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          level: "info" | "warn" | "error";
+          action: string;
+          details?: Json | null;
+          user_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          level?: "info" | "warn" | "error";
+          action?: string;
+          details?: Json | null;
+          user_id?: string | null;
+          created_at?: string;
+        };
+      };
       likes: {
         Relationships: [];
         Row: {
@@ -334,3 +382,5 @@ export type Comment = Database["public"]["Tables"]["comments"]["Row"];
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type SocialLink = Database["public"]["Tables"]["social_links"]["Row"];
 export type DonationGoal = Database["public"]["Tables"]["donation_goals"]["Row"];
+export type SystemLog = Database["public"]["Tables"]["system_logs"]["Row"];
+export type TranslationOverride = Database["public"]["Tables"]["translation_overrides"]["Row"];

@@ -8,6 +8,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getSiteLogoUrl } from "@/components/SiteLogo";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { EditModeProvider } from "@/components/ui/EditModeProvider";
+import AdminEditToggleWrapper from "@/components/admin/AdminEditToggleWrapper";
 import "../globals.css";
 
 const vazirmatn = Vazirmatn({
@@ -84,9 +86,12 @@ export default async function LocaleLayout({
         className={`${vazirmatn.variable} ${inter.variable} flex min-h-screen flex-col`}
       >
         <NextIntlClientProvider>
-          <Header logoUrl={logoUrl} />
-          <main className="flex-1">{children}</main>
-          <Footer logoUrl={logoUrl} />
+          <EditModeProvider>
+            <Header logoUrl={logoUrl} />
+            <main className="flex-1">{children}</main>
+            <Footer logoUrl={logoUrl} />
+            <AdminEditToggleWrapper />
+          </EditModeProvider>
         </NextIntlClientProvider>
       </body>
     </html>

@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logInfo, logError } from "@/lib/logger";
 
 export async function getSocialLinks() {
   const supabase = await createClient();
@@ -80,9 +81,11 @@ export async function addSocialLinkAction(formData: FormData) {
     .insert([data] as any);
 
   if (error) {
-    console.error("Error adding social link:", error);
+    await logError("ADD_SOCIAL_LINK_FAILED", { error: error.message, data }, user.id);
     throw new Error(error.message);
   }
+
+  await logInfo("SOCIAL_LINK_ADDED", { platform: data.platform }, user.id);
 
   revalidatePath("/", "layout");
   return { success: true };
@@ -119,9 +122,11 @@ export async function updateSocialLinkAction(id: string, formData: FormData) {
     .eq("id", id);
 
   if (error) {
-    console.error("Error updating social link:", error);
+    await logError("UPDATE_SOCIAL_LINK_FAILED", { error: error.message, id }, user.id);
     throw new Error(error.message);
   }
+
+  await logInfo("SOCIAL_LINK_UPDATED", { platform: data.platform, id }, user.id);
 
   revalidatePath("/", "layout");
   return { success: true };
@@ -150,9 +155,11 @@ export async function deleteSocialLinkAction(id: string) {
     .eq("id", id);
 
   if (error) {
-    console.error("Error deleting social link:", error);
+    await logError("DELETE_SOCIAL_LINK_FAILED", { error: error.message, id }, user.id);
     throw new Error(error.message);
   }
+
+  await logInfo("SOCIAL_LINK_DELETED", { id }, user.id);
 
   revalidatePath("/", "layout");
   return { success: true };

@@ -31,6 +31,10 @@ export async function GET(request: NextRequest) {
   // Keep-alive ping so Supabase free tier doesn't pause
   await supabase.from("posts").select("id").limit(1);
 
+  // Auto-cleanup logs older than 24 hours
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  await supabase.from("system_logs").delete().lt("created_at", yesterday);
+
   return NextResponse.json({
     published: due?.length || 0,
     ranAt: new Date().toISOString(),

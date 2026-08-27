@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+import { logInfo, logError } from "@/lib/logger";
+
 async function requireOwner() {
   const supabase = await createClient();
   const {
@@ -79,7 +81,12 @@ export async function inviteUserAction(
     }
   );
 
-  if (error) return { error: error.message, success: "" };
+  if (error) {
+    await logError("INVITE_USER_FAILED", { error: error.message, email, role: roleToInvite }, user!.id);
+    return { error: error.message, success: "" };
+  }
+
+  await logInfo("USER_INVITED", { email, role: roleToInvite }, user!.id);
 
   revalidatePath("/admin/users");
   return { error: "", success: `دعوت‌نامه به ${email} ارسال شد` };
@@ -120,7 +127,13 @@ export async function updateUserRoleAction(
     .update({ role })
     .eq("id", userId);
 
-  if (error) return { error: error.message };
+  if (error) {
+    await logError("UPDATE_USER_ROLE_FAILED", { error: error.message, targetUserId: userId, newRole: role }, user!.id);
+    return { error: error.message };
+  }
+
+  await logInfo("USER_ROLE_UPDATED", { targetUserId: userId, newRole: role }, user!.id);
+
   revalidatePath("/admin/users");
   return { ok: true };
 }
@@ -157,7 +170,13 @@ export async function deleteUserAction(userId: string) {
   const adminClient = createAdminClient();
   const { error } = await adminClient.auth.admin.deleteUser(userId);
 
-  if (error) return { error: error.message };
+  if (error) {
+    await logError("DELETE_USER_FAILED", { error: error.message, targetUserId: userId }, user!.id);
+    return { error: error.message };
+  }
+
+  await logInfo("USER_DELETED", { targetUserId: userId }, user!.id);
+
   revalidatePath("/admin/users");
   return { ok: true };
 }

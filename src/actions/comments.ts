@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logInfo, logError } from "@/lib/logger";
 
 export async function approveCommentAction(commentId: string) {
   const supabase = await createClient();
@@ -15,7 +16,13 @@ export async function approveCommentAction(commentId: string) {
     .update({ status: "approved" })
     .eq("id", commentId);
 
-  if (error) return { error: error.message };
+  if (error) {
+    await logError("APPROVE_COMMENT_FAILED", { error: error.message, commentId }, user.id);
+    return { error: error.message };
+  }
+
+  await logInfo("COMMENT_APPROVED", { commentId }, user.id);
+
   revalidatePath("/admin/comments");
   revalidatePath("/fa/blog");
   revalidatePath("/en/blog");
@@ -34,7 +41,13 @@ export async function deleteCommentAction(commentId: string) {
     .delete()
     .eq("id", commentId);
 
-  if (error) return { error: error.message };
+  if (error) {
+    await logError("DELETE_COMMENT_FAILED", { error: error.message, commentId }, user.id);
+    return { error: error.message };
+  }
+
+  await logInfo("COMMENT_DELETED", { commentId }, user.id);
+
   revalidatePath("/admin/comments");
   return { ok: true };
 }

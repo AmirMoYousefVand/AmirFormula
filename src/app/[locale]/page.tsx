@@ -4,6 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { getFeaturedPosts, localizedTitle, localizedExcerpt } from "@/lib/queries";
 import PostCard from "@/components/blog/PostCard";
 import DonationGoal from "@/components/home/DonationGoal";
+import EditableText from "@/components/ui/EditableText";
 
 export const dynamic = "force-dynamic";
 
@@ -38,13 +39,21 @@ export default async function HomePage({
               {t("heroBadge")}
             </span>
 
-            <h1 className="mb-5 text-4xl font-black leading-tight text-white md:text-5xl">
-              {t("heroTitle")}
-            </h1>
+            <EditableText
+              namespace="home"
+              tKey="heroTitle"
+              text={t("heroTitle")}
+              as="h1"
+              className="mb-5 text-4xl font-black leading-tight text-white md:text-5xl"
+            />
 
-            <p className="mb-8 text-lg leading-relaxed text-white/70">
-              {t("heroSubtitle")}
-            </p>
+            <EditableText
+              namespace="home"
+              tKey="heroSubtitle"
+              text={t("heroSubtitle")}
+              as="p"
+              className="mb-8 text-lg leading-relaxed text-white/70"
+            />
 
             <div className="flex flex-wrap gap-3">
               <Link
@@ -70,9 +79,13 @@ export default async function HomePage({
       {/* Featured posts */}
       <section className="mx-auto max-w-6xl px-4 py-16">
         <div className="mb-8 flex items-center justify-between">
-          <h2 className="text-2xl font-black text-navy md:text-3xl">
-            {t("featuredTitle")}
-          </h2>
+          <EditableText
+            namespace="home"
+            tKey="featuredTitle"
+            text={t("featuredTitle")}
+            as="h2"
+            className="text-2xl font-black text-navy md:text-3xl"
+          />
           <Link
             href="/blog"
             className="text-sm font-bold text-primary-hover hover:text-navy"
@@ -122,10 +135,20 @@ export default async function HomePage({
         <div className="mx-auto max-w-6xl px-4 py-16">
           <div className="grid items-center gap-10 md:grid-cols-2">
             <div>
-              <h2 className="mb-4 text-2xl font-black text-navy md:text-3xl">
-                {t("aboutTitle")}
-              </h2>
-              <p className="leading-relaxed text-body">{t("aboutText")}</p>
+              <EditableText
+                namespace="home"
+                tKey="aboutTitle"
+                text={t("aboutTitle")}
+                as="h2"
+                className="mb-4 text-2xl font-black text-navy md:text-3xl"
+              />
+              <EditableText
+                namespace="home"
+                tKey="aboutText"
+                text={t("aboutText")}
+                as="p"
+                className="leading-relaxed text-body"
+              />
             </div>
 
             <div className="rounded-2xl bg-navy p-8 text-center shadow-lg">

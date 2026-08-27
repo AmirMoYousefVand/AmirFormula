@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logInfo, logError } from "@/lib/logger";
 
 const ALLOWED_KEYS = ["site_name", "site_description", "favicon_url", "site_logo_url"];
 
@@ -26,8 +27,13 @@ export async function saveSiteSettingAction(
     const { error } = await supabase
       .from("site_settings")
       .upsert({ key, value }, { onConflict: "key" });
-    if (error) return { error: error.message };
+    if (error) {
+      await logError("UPDATE_SETTINGS_FAILED", { error: error.message, key }, user.id);
+      return { error: error.message };
+    }
   }
+
+  await logInfo("SETTINGS_UPDATED", { updates }, user.id);
 
   revalidatePath("/", "layout");
   return { success: "تنظیمات با موفقیت ذخیره شد" };
@@ -44,7 +50,13 @@ export async function deleteStorageFileAction(fileName: string) {
   const adminClient = createAdminClient();
   const { error } = await adminClient.storage.from("covers").remove([fileName]);
 
-  if (error) return { error: error.message };
+  if (error) {
+    await logError("DELETE_FILE_FAILED", { error: error.message, fileName }, user.id);
+    return { error: error.message };
+  }
+
+  await logInfo("FILE_DELETED", { fileName }, user.id);
+
   revalidatePath("/admin/storage");
   return { ok: true };
 }
@@ -111,7 +123,12 @@ export async function cleanupOrphanedFilesAction() {
     .from("covers")
     .remove(orphans);
 
-  if (removeError) return { error: removeError.message };
+  if (removeError) {
+    await logError("CLEANUP_ORPHANS_FAILED", { error: removeError.message }, user.id);
+    return { error: removeError.message };
+  }
+
+  await logInfo("CLEANUP_ORPHANS", { deletedCount: orphans.length, files: orphans }, user.id);
 
   revalidatePath("/admin/storage");
   return { deleted: orphans.length };

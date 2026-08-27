@@ -15,6 +15,7 @@ const links = [
   { href: "/admin/settings", label: "تنظیمات سایت", icon: "⚙️", adminOnly: true },
   { href: "/admin/settings/social-links", label: "شبکه‌های اجتماعی", icon: "🌐", adminOnly: true },
   { href: "/admin/donations", label: "حمایت مالی", icon: "☕", adminOnly: true },
+  { href: "/admin/logs", label: "لاگ‌های سیستم", icon: "📝", adminOnly: true },
   { href: "/admin/users", label: "مدیران", icon: "👥", adminOnly: true },
 ];
 
