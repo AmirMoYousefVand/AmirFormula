@@ -41,12 +41,12 @@ export default function ShareButton({ slug, locale }: { slug: string; locale: st
       {copied ? (
         <>
           <Check className="h-4 w-4 text-green-600" />
-          کپی شد!
+          {locale === "fa" ? "کپی شد!" : "Copied!"}
         </>
       ) : (
         <>
           <Share2 className="h-4 w-4" />
-          اشتراک‌گذاری
+          {locale === "fa" ? "اشتراک‌گذاری" : "Share"}
         </>
       )}
     </button>

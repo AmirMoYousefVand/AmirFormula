@@ -25,7 +25,7 @@ export default function Footer({ logoUrl }: { logoUrl?: string | null }) {
                 A
               </span>
             )}
-            <span className="font-black text-white">
+            <span className="font-black text-white" dir="ltr">
               Amir<span className="text-primary"> Formula</span>
             </span>
           </div>

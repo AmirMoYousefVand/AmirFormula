@@ -34,7 +34,7 @@ export default function Header({ logoUrl }: { logoUrl?: string | null }) {
                 A
               </span>
             )}
-            <span className="text-lg font-black tracking-tight text-white">
+            <span className="text-lg font-black tracking-tight text-white" dir="ltr">
               Amir<span className="text-primary"> Formula</span>
             </span>
           </Link>
