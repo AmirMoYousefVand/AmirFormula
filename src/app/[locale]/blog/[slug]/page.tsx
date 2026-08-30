@@ -12,6 +12,7 @@ import {
 import MarkdownRenderer from "@/components/blog/MarkdownRenderer";
 import CommentsSection from "@/components/blog/CommentsSection";
 import LikeButton from "@/components/blog/LikeButton";
+import ShareButton from "@/components/blog/ShareButton";
 import ViewTracker from "@/components/blog/ViewTracker";
 import TagList from "@/components/blog/TagList";
 import { formatDate, formatNumber } from "@/lib/utils";
@@ -96,6 +97,7 @@ export default async function PostPage({
 
       <div className="mt-10 flex items-center gap-3">
         <LikeButton slug={slug} />
+        <ShareButton slug={slug} locale={locale} />
         <span className="text-sm text-body">{tc("title")}</span>
       </div>
 
