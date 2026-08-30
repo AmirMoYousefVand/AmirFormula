@@ -52,7 +52,7 @@ export async function savePostAction(
 
   // Auto-generate slug from title_fa if empty
   if (!data.slug) {
-    data.slug = makeSlug(data.title_fa);
+    data.slug = makeSlug(data.title_fa || "draft-" + Date.now());
   }
 
   // Ensure slug uniqueness
@@ -82,6 +82,8 @@ export async function savePostAction(
     ...data,
     slug,
     author_id: user.id,
+    title_fa: data.title_fa || "",
+    content_fa: data.content_fa || "",
     published_at: publishedAt || null,
     updated_at: new Date().toISOString(),
   };

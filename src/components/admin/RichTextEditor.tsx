@@ -20,9 +20,11 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
+  Grid3X3,
 } from "lucide-react";
 import { uploadImageToSupabase } from "@/lib/supabase/storage";
 import { useRef, useState } from "react";
+import MediaGallery from "./MediaGallery";
 
 interface RichTextEditorProps {
   value: string;
@@ -36,6 +38,7 @@ export default function RichTextEditor({
   dir = "rtl",
 }: RichTextEditorProps) {
   const [uploading, setUploading] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
@@ -218,6 +221,10 @@ export default function RichTextEditor({
             <ImageIcon size={18} />
           )}
         </ToolbarButton>
+
+        <ToolbarButton onClick={() => setGalleryOpen(true)}>
+          <Grid3X3 size={18} />
+        </ToolbarButton>
       </div>
 
       {/* Editor Content Area */}
@@ -234,6 +241,17 @@ export default function RichTextEditor({
       >
         <EditorContent editor={editor} />
       </div>
+
+      {galleryOpen && (
+        <MediaGallery
+          onSelect={(url) => {
+            editor?.chain().focus().setImage({ src: url }).run();
+            setGalleryOpen(false);
+          }}
+          onClose={() => setGalleryOpen(false)}
+          accept="image/*"
+        />
+      )}
     </div>
   );
 }

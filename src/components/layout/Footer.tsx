@@ -40,8 +40,11 @@ export default function Footer({ logoUrl }: { logoUrl?: string | null }) {
             <Link href="/contact" className="hover:text-primary">
               {t("contact")}
             </Link>
-            <FooterSocialLinks />
           </nav>
+        </div>
+
+        <div className="mt-6 flex justify-center gap-3">
+          <FooterSocialLinks />
         </div>
 
         <div className="mt-8 border-t border-white/10 pt-6 text-center text-xs text-white/50">

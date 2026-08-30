@@ -71,7 +71,7 @@ export default function Header({ logoUrl }: { logoUrl?: string | null }) {
               className="ml-2 flex items-center gap-1.5 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
             >
               <Coffee className="h-4 w-4" />
-              <EditableText namespace="nav" tKey="home" text="حامی من باش" as="span" />
+              <EditableText namespace="nav" tKey="sponsor" text={t("sponsor")} as="span" />
             </a>
           </nav>
 
@@ -80,7 +80,7 @@ export default function Header({ logoUrl }: { logoUrl?: string | null }) {
               href="https://www.coffeete.ir/Amir_formula"
               target="_blank"
               rel="noopener noreferrer"
-              title="حامی من باش"
+              title={t("sponsor")}
               className="flex h-9 w-9 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-primary/20 hover:text-primary md:hidden"
             >
               <Coffee className="h-5 w-5" />
@@ -131,7 +131,7 @@ export default function Header({ logoUrl }: { logoUrl?: string | null }) {
                   className="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-white/10"
                 >
                   <Coffee className="h-4 w-4" />
-                  حامی من باش
+                  <EditableText namespace="nav" tKey="sponsor" text={t("sponsor")} as="span" />
                 </a>
               </div>
             </details>

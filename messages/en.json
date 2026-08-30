@@ -3,7 +3,8 @@
     "home": "Home",
     "blog": "Blog",
     "analytics": "Data Analytics",
-    "contact": "Contact"
+    "contact": "Contact",
+    "sponsor": "Support Me"
   },
   "home": {
     "heroBadge": "F1 Data Analyst",
@@ -26,6 +27,7 @@
     "backToBlog": "Back to blog",
     "notFound": "Article not found",
     "views": "views",
+    "likes": "likes",
     "tags": "Tags",
     "taggedWith": "Tagged with",
     "sharePost": "Share"

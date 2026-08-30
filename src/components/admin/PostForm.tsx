@@ -95,7 +95,6 @@ export default function PostForm({ post, tags, selectedTagIds }: Props) {
               name="title_fa"
               value={titleFa}
               onChange={(e) => setTitleFa(e.target.value)}
-              required
               maxLength={200}
               className="mb-4 w-full rounded-lg border border-silver/50 px-3 py-2.5 text-sm outline-none focus:border-primary"
             />

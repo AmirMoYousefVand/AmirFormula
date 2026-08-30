@@ -18,7 +18,7 @@ const config: Config = {
       },
       fontFamily: {
         fa: ["var(--font-vazirmatn)", "Tahoma", "sans-serif"],
-        en: ["var(--font-inter)", "system-ui", "sans-serif"],
+        en: ["var(--font-space-grotesk)", "system-ui", "sans-serif"],
       },
     },
   },

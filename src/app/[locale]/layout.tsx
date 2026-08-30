@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
-import { Vazirmatn, Inter } from "next/font/google";
+import { Vazirmatn, Space_Grotesk } from "next/font/google";
 import { routing } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteLogoUrl } from "@/components/SiteLogo";
@@ -18,9 +18,9 @@ const vazirmatn = Vazirmatn({
   display: "swap",
 });
 
-const inter = Inter({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-space-grotesk",
   display: "swap",
 });
 
@@ -83,7 +83,7 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} dir={dir}>
       <body
-        className={`${vazirmatn.variable} ${inter.variable} flex min-h-screen flex-col`}
+        className={`${vazirmatn.variable} ${spaceGrotesk.variable} flex min-h-screen flex-col`}
       >
         <NextIntlClientProvider>
           <EditModeProvider>

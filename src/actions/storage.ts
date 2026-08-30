@@ -7,6 +7,37 @@ import { logInfo, logError } from "@/lib/logger";
 
 const ALLOWED_KEYS = ["site_name", "site_description", "favicon_url", "site_logo_url"];
 
+export async function listStorageFilesAction(): Promise<
+  { name: string; id: string; created_at: string; url: string }[]
+> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const adminClient = createAdminClient();
+  const { data: files, error } = await adminClient.storage
+    .from("covers")
+    .list("", { limit: 100, sortBy: { column: "created_at", order: "desc" } });
+
+  if (error || !files) return [];
+
+  return files
+    .filter((f) => !f.name.startsWith("."))
+    .map((f) => {
+      const {
+        data: { publicUrl },
+      } = adminClient.storage.from("covers").getPublicUrl(f.name);
+      return {
+        name: f.name,
+        id: f.id || "",
+        created_at: f.created_at || "",
+        url: publicUrl,
+      };
+    });
+}
+
 export async function saveSiteSettingAction(
   _prev: { error?: string; success?: string } | null,
   formData: FormData

@@ -75,19 +75,13 @@ export default async function PostPage({
           <span>
             👁 {formatNumber(post.view_count, locale)} {t("views")}
           </span>
+          <span className="inline-flex items-center gap-1">
+            <svg className="h-4 w-4 text-red-400" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+            </svg>
+            {formatNumber(post.like_count, locale)} {t("likes")}
+          </span>
         </div>
-
-        {post.tags.length > 0 && (
-          <div className="mt-4">
-            <TagList
-              tags={post.tags.map((tg) => ({
-                name: (locale === "en" ? tg.name_en : tg.name_fa) || tg.name_fa,
-                slug: tg.slug,
-              }))}
-              locale={locale}
-            />
-          </div>
-        )}
       </header>
 
       {post.cover_image_url && (
@@ -104,6 +98,18 @@ export default async function PostPage({
         <LikeButton slug={slug} />
         <span className="text-sm text-body">{tc("title")}</span>
       </div>
+
+      {post.tags.length > 0 && (
+        <div className="mt-6">
+          <TagList
+            tags={post.tags.map((tg) => ({
+              name: (locale === "en" ? tg.name_en : tg.name_fa) || tg.name_fa,
+              slug: tg.slug,
+            }))}
+            locale={locale}
+          />
+        </div>
+      )}
 
       <CommentsSection slug={slug} comments={comments} />
     </article>

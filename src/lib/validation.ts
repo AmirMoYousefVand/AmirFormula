@@ -16,13 +16,13 @@ export const likeSchema = z.object({
 export const postSchema = z
   .object({
     id: z.string().uuid().optional(),
-    slug: z.string().min(1).max(100),
+    slug: z.string().max(100).optional().or(z.literal("")),
     status: z.enum(["draft", "scheduled", "published"]),
-    title_fa: z.string().trim().min(2).max(200),
+    title_fa: z.string().trim().max(200).optional().or(z.literal("")),
     title_en: z.string().trim().max(200).optional().or(z.literal("")),
     excerpt_fa: z.string().trim().max(300).optional().or(z.literal("")),
     excerpt_en: z.string().trim().max(300).optional().or(z.literal("")),
-    content_fa: z.string().min(1),
+    content_fa: z.string().optional().or(z.literal("")),
     content_en: z.string().optional().or(z.literal("")),
     cover_image_url: z.string().url().optional().or(z.literal("")),
     published_at: z.string().optional(),
@@ -37,6 +37,26 @@ export const postSchema = z
     {
       message: "Scheduled posts need a valid publish date",
       path: ["published_at"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.status === "draft") return true;
+      return data.title_fa && data.title_fa.trim().length >= 2;
+    },
+    {
+      message: "Title (Farsi) is required for published/scheduled posts (min 2 chars)",
+      path: ["title_fa"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.status === "draft") return true;
+      return data.content_fa && data.content_fa.trim().length >= 1;
+    },
+    {
+      message: "Content (Farsi) is required for published/scheduled posts",
+      path: ["content_fa"],
     }
   );
 

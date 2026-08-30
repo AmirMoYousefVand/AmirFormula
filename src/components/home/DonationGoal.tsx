@@ -1,9 +1,13 @@
 import { Coffee } from "lucide-react";
 import { getHomepageDonations } from "@/actions/donation-goal";
 import EditableText from "@/components/ui/EditableText";
+import { getTranslations } from "next-intl/server";
+import { formatDate } from "@/lib/utils";
 
 export default async function DonationGoal() {
   const { goals, donations } = await getHomepageDonations();
+  const t = await getTranslations("home");
+  const tn = await getTranslations("nav");
 
   if (!goals.length && !donations.length) return null;
 
@@ -17,14 +21,14 @@ export default async function DonationGoal() {
           <EditableText
             namespace="home"
             tKey="ctaBlog"
-            text="حامی من باشید"
+            text={t("ctaBlog")}
             as="h2"
             className="mb-3 text-2xl font-black text-white md:text-3xl flex items-center justify-center gap-3"
           />
           <EditableText
             namespace="home"
             tKey="heroSubtitle"
-            text="حمایت شما به ادامه توسعه این سایت کمک می‌کند"
+            text={t("heroSubtitle")}
             as="p"
             className="mb-8 text-white/60"
           />
@@ -81,6 +85,9 @@ export default async function DonationGoal() {
                       <span className="text-sm font-medium text-white">
                         {d.supporterName || (d.isAnonymous ? "حامی ناشناس" : "حامی")}
                       </span>
+                      <span className="text-[11px] text-white/40">
+                        {formatDate(d.createdAt, "fa")}
+                      </span>
                       {d.message && (
                         <span className="text-xs text-white/50 max-w-[200px] truncate sm:max-w-[300px]">
                           "{d.message}"
@@ -109,9 +116,9 @@ export default async function DonationGoal() {
           >
             <Coffee className="h-5 w-5" />
             <EditableText
-              namespace="home"
-              tKey="ctaAnalytics"
-              text="حامی من باشید"
+              namespace="nav"
+              tKey="sponsor"
+              text={tn("sponsor")}
               as="span"
             />
           </a>
