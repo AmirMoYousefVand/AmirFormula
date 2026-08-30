@@ -6,6 +6,7 @@ Usage: python fetch_f1_data.py [--year 2025] [--gp "Bahrain Grand Prix"] [--sess
 """
 
 import argparse
+import gzip
 import json
 import os
 import sys
@@ -219,8 +220,8 @@ def fetch_session_data(year, gp_name, session_type):
                 if tel is None or tel.empty:
                     continue
                 if not tel.empty:
-                    # Sample to reduce file size (keep every N points)
-                    sample_rate = max(1, len(tel) // 200)  # ~200 points per lap
+                    # Sample to reduce file size (160 points per lap)
+                    sample_rate = max(1, len(tel) // 160)
                     indices = np.arange(0, len(tel), sample_rate)
                     sampled = tel.iloc[indices]
 
@@ -257,24 +258,29 @@ def fetch_available_sessions(year, gp_name):
 
 
 def save_data(data, filename):
-    """Save data as JSON."""
+    """Save data as gzip-compressed JSON."""
     filepath = OUTPUT_DIR / filename
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-    print(f"Saved: {filepath} ({filepath.stat().st_size / 1024:.1f} KB)")
+    with gzip.open(filepath, "wt", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
+    size_kb = filepath.stat().st_size / 1024
+    print(f"Saved: {filepath} ({size_kb:.1f} KB gzipped)")
     return filepath
 
 
 def build_index():
-    """Build index.json from existing JSON files in the telemetry directory."""
-    files = list(OUTPUT_DIR.glob("*.json"))
+    """Build index.json from existing JSON/gzip files in the telemetry directory."""
+    files = list(OUTPUT_DIR.glob("*.json.gz")) + list(OUTPUT_DIR.glob("*.json"))
     sessions = []
     for f in files:
         if f.name == "index.json":
             continue
         try:
-            with open(f, "r", encoding="utf-8") as fh:
-                data = json.load(fh)
+            if f.suffix == ".gz":
+                with gzip.open(f, "rt", encoding="utf-8") as fh:
+                    data = json.load(fh)
+            else:
+                with open(f, "r", encoding="utf-8") as fh:
+                    data = json.load(fh)
             sessions.append({
                 "filename": f.name,
                 "year": data.get("year"),
@@ -332,7 +338,7 @@ def main():
     if args.gp and args.session:
         data = fetch_session_data(args.year, args.gp, args.session)
         if data:
-            filename = f"{args.year}_{args.gp.replace(' ', '_')}_{args.session}.json"
+            filename = f"{args.year}_{args.gp.replace(' ', '_')}_{args.session}.json.gz"
             save_data(data, filename)
             print(f"\nDone! Fetched {len(data['drivers'])} drivers, {len(data['laps'])} laps")
             build_index()
@@ -343,7 +349,7 @@ def main():
         for s in sessions:
             data = fetch_session_data(args.year, args.gp, s)
             if data:
-                filename = f"{args.year}_{args.gp.replace(' ', '_')}_{s}.json"
+                filename = f"{args.year}_{args.gp.replace(' ', '_')}_{s}.json.gz"
                 save_data(data, filename)
         build_index()
         return

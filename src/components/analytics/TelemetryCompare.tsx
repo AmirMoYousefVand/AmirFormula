@@ -339,7 +339,8 @@ export default function TelemetryCompare() {
       if (!c) throw new Error("Session not cached");
       const res = await fetch(`/data/telemetry/${c.filename}`);
       if (!res.ok) throw new Error("File not found");
-      setSessionData(await res.json());
+      const raw = await res.text();
+      setSessionData(JSON.parse(raw));
     } catch (e: any) { setError(e.message); setSessionData(null); } finally { setLoading(false); }
   }, [selectedGP, selectedSession, cachedSessions]);
 
