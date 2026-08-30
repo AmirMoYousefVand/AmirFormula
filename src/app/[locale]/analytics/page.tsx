@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { setRequestLocale, getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import EditableText from "@/components/ui/EditableText";
 
 export async function generateMetadata({
@@ -64,6 +65,20 @@ export default async function AnalyticsPage({
             <p className="font-bold text-navy">{t(key)}</p>
           </div>
         ))}
+      </div>
+
+      {/* Telemetry Compare CTA */}
+      <div className="mb-8 rounded-2xl bg-navy p-8 text-center">
+        <p className="mb-3 text-lg font-bold text-white"> مقایسه تله‌متری رانندگان</p>
+        <p className="mb-4 text-sm text-white/60">
+          داده‌های تله‌متری لحظه‌ای (سرعت، گاز، ترمز، دنده، RPM) رو بین رانندگان مقایسه کنید
+        </p>
+        <Link
+          href="/analytics/telemetry"
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-navy transition-transform hover:scale-105 hover:bg-primary-hover"
+        >
+          🏎️ شروع مقایسه
+        </Link>
       </div>
 
       {/* Telegram CTA */}
