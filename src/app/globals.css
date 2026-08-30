@@ -20,6 +20,15 @@ html[lang="en"] body {
   font-size: 0.95em;
 }
 
+/* Bidirectional font: LTR elements always get English font, RTL always get Farsi font */
+[dir="ltr"] {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+}
+
+[dir="rtl"] {
+  font-family: var(--font-vazirmatn), Tahoma, sans-serif;
+}
+
 /* Markdown content styles */
 .markdown-body h1,
 .markdown-body h2,
