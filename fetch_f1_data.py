@@ -22,6 +22,43 @@ except ImportError as e:
     print("Install: pip install fastf1 numpy pandas")
     sys.exit(1)
 
+# --- User-Agent patch to avoid bot detection ---
+import requests as _requests
+import urllib.request as _urllib_request
+
+_original_get = _requests.get
+_original_urlopen = _urllib_request.urlopen
+
+def _patched_get(*args, **kwargs):
+    kwargs.setdefault("headers", {})
+    if "User-Agent" not in kwargs["headers"]:
+        kwargs["headers"]["User-Agent"] = (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        )
+    return _original_get(*args, **kwargs)
+
+def _patched_urlopen(url, *args, **kwargs):
+    if isinstance(url, str):
+        req = _urllib_request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                          "AppleWebKit/537.36 (KHTML, like Gecko) "
+                          "Chrome/125.0.0.0 Safari/537.36"
+        })
+        return _original_urlopen(req, *args, **kwargs)
+    elif isinstance(url, _urllib_request.Request):
+        url.add_header("User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36")
+        return _original_urlopen(url, *args, **kwargs)
+    return _original_urlopen(url, *args, **kwargs)
+
+_requests.get = _patched_get
+_requests.Session.get = _patched_get
+_urllib_request.urlopen = _patched_urlopen
+
 # Cache setup
 CACHE_DIR = Path(__file__).parent / ".f1cache"
 CACHE_DIR.mkdir(exist_ok=True)
@@ -147,6 +184,10 @@ def fetch_session_data(year, gp_name, session_type):
 
     # Get circuit corners and rotation
     try:
+        import requests
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
         circuit_info = session.get_circuit_info()
         if circuit_info is not None and hasattr(circuit_info, 'corners'):
             for _, corner in circuit_info.corners.iterrows():
@@ -159,7 +200,7 @@ def fetch_session_data(year, gp_name, session_type):
                 })
         result["trackRotation"] = float(circuit_info.rotation) if hasattr(circuit_info, 'rotation') else 0
     except Exception as e:
-        print(f"  Warning: Could not get circuit info: {e}")
+        print(f"  Warning: Could not get circuit info (Network issue?): {e}")
         result["trackRotation"] = 0
 
     for driver_code in drivers:

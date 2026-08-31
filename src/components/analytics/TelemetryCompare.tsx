@@ -339,8 +339,27 @@ export default function TelemetryCompare() {
       if (!c) throw new Error("Session not cached");
       const res = await fetch(`/data/telemetry/${c.filename}`);
       if (!res.ok) throw new Error("File not found");
-      const raw = await res.text();
-      setSessionData(JSON.parse(raw));
+
+      let text: string;
+      if (c.filename.endsWith(".gz")) {
+        // Decompress gzip in browser
+        const ds = new DecompressionStream("gzip");
+        const reader = res.body!.pipeThrough(ds).getReader();
+        const chunks: Uint8Array[] = [];
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+        }
+        const totalLen = chunks.reduce((s, c) => s + c.length, 0);
+        const merged = new Uint8Array(totalLen);
+        let offset = 0;
+        for (const chunk of chunks) { merged.set(chunk, offset); offset += chunk.length; }
+        text = new TextDecoder().decode(merged);
+      } else {
+        text = await res.text();
+      }
+      setSessionData(JSON.parse(text));
     } catch (e: any) { setError(e.message); setSessionData(null); } finally { setLoading(false); }
   }, [selectedGP, selectedSession, cachedSessions]);
 
