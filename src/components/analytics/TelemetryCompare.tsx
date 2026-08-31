@@ -16,25 +16,17 @@ interface TelemetryData {
   distance: number[]; speed: number[]; throttle: number[]; brake: number[];
   rpm: number[]; gear: number[]; drs: number[]; x: number[]; y: number[];
 }
-
 interface LapInfo {
   driver: string; lapNumber: number; lapTime: number; isFastest: boolean;
   compound: string; tyreLife: number; telemetry: TelemetryData | null;
 }
-
 interface DriverInfo { code: string; name: string; team: string; color: string; headshot: string; }
 interface CornerInfo { number: string; distance: number; x: number; y: number; angle: number; }
-
 interface SessionData {
   year: number; gp: string; session: string; circuit: string;
   drivers: DriverInfo[]; laps: LapInfo[]; corners: CornerInfo[]; trackRotation: number;
 }
-
-interface CachedSession {
-  filename: string; year: number; gp: string; session: string;
-  circuit: string; drivers: string[]; lapCount: number;
-}
-
+interface CachedSession { filename: string; year: number; gp: string; session: string; circuit: string; drivers: string[]; lapCount: number; }
 interface SelectedLap {
   driver: string; lapNumber: number; lapTime: number; color: string;
   isRef: boolean; compound: string; telemetry: TelemetryData;
@@ -43,16 +35,10 @@ interface SelectedLap {
 // ──────── Helpers ────────
 function fmt(s: number): string {
   if (!s || isNaN(s)) return "--:--.---";
-  const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60);
-  const ms = Math.round((s % 1) * 1000);
+  const m = Math.floor(s / 60), sec = Math.floor(s % 60), ms = Math.round((s % 1) * 1000);
   return `${m}:${String(sec).padStart(2, "0")}.${String(ms).padStart(3, "0")}`;
 }
-
-function fmtDelta(s: number): string {
-  if (!s || isNaN(s)) return "0.000";
-  return (s > 0 ? "+" : "") + s.toFixed(3);
-}
+function fmtDelta(s: number): string { return (s > 0 ? "+" : "") + s.toFixed(3); }
 
 const COMPOUND_COLORS: Record<string, { bg: string; text: string; label: string }> = {
   SOFT: { bg: "#EF4444", text: "white", label: "S" },
@@ -61,46 +47,84 @@ const COMPOUND_COLORS: Record<string, { bg: string; text: string; label: string 
   INTERMEDIATE: { bg: "#22C55E", text: "white", label: "I" },
   WET: { bg: "#3B82F6", text: "white", label: "W" },
 };
-
-function CompoundBadge({ compound, size = "sm" }: { compound: string; size?: "sm" | "md" }) {
+function CompoundBadge({ compound }: { compound: string }) {
   const c = COMPOUND_COLORS[compound?.toUpperCase()] || COMPOUND_COLORS.HARD;
-  const s = size === "md" ? "h-6 w-6 text-[11px]" : "h-5 w-5 text-[10px]";
-  return (
-    <span className={`inline-flex items-center justify-center rounded-full font-black ${s}`}
-      style={{ backgroundColor: c.bg, color: c.text }}>
-      {c.label}
-    </span>
-  );
+  return <span className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black" style={{ backgroundColor: c.bg, color: c.text }}>{c.label}</span>;
 }
 
-const SESSION_LABELS: Record<string, string> = {
-  FP1: "Practice 1", FP2: "Practice 2", FP3: "Practice 3",
-  Q: "Qualifying", SQ: "Sprint Qualifying", S: "Sprint", R: "Race",
-};
+// ──────── Python delta_time implementation ────────
+// Matches: delta_time(reference_lap, compare_lap) from telemetries_compare.py
+function computeTimeDelta(
+  refDist: number[], refSpeed: number[],
+  compDist: number[], compSpeed: number[]
+): number[] {
+  const refLen = refDist.length;
+  const compLen = compDist.length;
+  if (refLen < 2 || compLen < 2) return new Array(refLen).fill(0);
 
-// ──────── Build chart data with CORRECT time delta ────────
+  // Build cumulative time arrays from distance + speed (like get_car_data Time column)
+  const buildTime = (dist: number[], spd: number[]): number[] => {
+    const time = [0];
+    for (let i = 1; i < dist.length; i++) {
+      const dd = dist[i] - dist[i - 1]; // meters
+      const avgMs = ((spd[i - 1] + spd[i]) / 2) / 3.6; // km/h -> m/s
+      time.push(time[i - 1] + (avgMs > 0.5 ? dd / avgMs : 0));
+    }
+    return time;
+  };
+
+  const refTime = buildTime(refDist, refSpeed);
+  const compTime = buildTime(compDist, compSpeed);
+
+  // Python: multiplier = ref.Distance.iat[-1] / comp.Distance.iat[-1]
+  const refTotalDist = refDist[refLen - 1];
+  const compTotalDist = compDist[compLen - 1];
+  const multiplier = refTotalDist / compTotalDist;
+
+  // Python: ldistance = mini_pro(comp.Distance) * multiplier
+  // mini_pro extrapolates first and last points
+  const compDistExt = [compDist[0] - (compDist[1] - compDist[0]), ...compDist, compDist[compLen - 1] + (compDist[compLen - 1] - compDist[compLen - 2])];
+  const compTimeExt = [compTime[0] - (compTime[1] - compTime[0]), ...compTime, compTime[compLen - 1] + (compTime[compLen - 1] - compTime[compLen - 2])];
+  const scaledDist = compDistExt.map((d) => d * multiplier);
+
+  // Python: lap_time = np.interp(ref['Distance'], ldistance, ltime)
+  // Python: delta = lap_time - ref['Time'].dt.total_seconds()
+  const delta = refDist.map((rd, i) => {
+    // Interpolate comp time at this reference distance
+    let ct = 0;
+    for (let j = 0; j < scaledDist.length - 1; j++) {
+      if (rd >= scaledDist[j] && rd <= scaledDist[j + 1]) {
+        const t = (rd - scaledDist[j]) / (scaledDist[j + 1] - scaledDist[j] || 1);
+        ct = compTimeExt[j] + t * (compTimeExt[j + 1] - compTimeExt[j]);
+        break;
+      }
+    }
+    return ct - refTime[i];
+  });
+
+  return delta;
+}
+
+// ──────── Build chart data ────────
 function buildChartData(selected: SelectedLap[], corners: CornerInfo[]) {
   if (selected.length < 2) return { data: [], cornerAxis: [] };
   const ref = selected.find((s) => s.isRef) || selected[0];
   const maxLen = ref.telemetry.distance.length;
-
   const cornerAxis = corners.map((c) => ({ distance: c.distance, label: c.number }));
 
-  // Pre-compute reference time array (cumulative seconds from distance)
-  const refDist = ref.telemetry.distance;
-  const refSpeed = ref.telemetry.speed;
-  const refTimeArr: number[] = [0];
-  for (let i = 1; i < maxLen; i++) {
-    const dd = refDist[i] - refDist[i - 1]; // meters
-    const avgSpd = (refSpeed[i - 1] + refSpeed[i]) / 2 / 3.6; // m/s
-    refTimeArr.push(refTimeArr[i - 1] + (avgSpd > 0 ? dd / avgSpd : 0));
+  // Pre-compute time delta for each non-ref lap (like Python delta_time)
+  const deltaMap = new Map<string, number[]>();
+  for (const s of selected) {
+    if (s.isRef) continue;
+    deltaMap.set(s.driver, computeTimeDelta(
+      ref.telemetry.distance, ref.telemetry.speed,
+      s.telemetry.distance, s.telemetry.speed
+    ));
   }
 
   const data: Record<string, any>[] = [];
   for (let i = 0; i < maxLen; i++) {
-    const dist = refDist[i];
-    const pt: Record<string, any> = { distance: Math.round(dist) };
-
+    const pt: Record<string, any> = { distance: Math.round(ref.telemetry.distance[i]) };
     for (const s of selected) {
       const t = s.telemetry;
       const idx = Math.min(i, t.speed.length - 1);
@@ -111,22 +135,9 @@ function buildChartData(selected: SelectedLap[], corners: CornerInfo[]) {
       pt[`${s.driver}_rpm`] = t.rpm[idx] ?? 0;
 
       if (!s.isRef) {
-        const refIdx = Math.min(i, refSpeed.length - 1);
-        pt[`${s.driver}_speed_delta`] = (t.speed[idx] ?? 0) - (refSpeed[refIdx] ?? 0);
-
-        // Correct time delta: compare time at same distance
-        const compDist = t.distance;
-        const compSpeed = t.speed;
-        const compTimeArr: number[] = [0];
-        for (let j = 1; j < compDist.length; j++) {
-          const dd = compDist[j] - compDist[j - 1];
-          const avgSpd = (compSpeed[j - 1] + compSpeed[j]) / 2 / 3.6;
-          compTimeArr.push(compTimeArr[j - 1] + (avgSpd > 0 ? dd / avgSpd : 0));
-        }
-        // Find time at same distance ratio
-        const distRatio = i / maxLen;
-        const compIdx = Math.min(Math.round(distRatio * (compDist.length - 1)), compDist.length - 1);
-        pt[`${s.driver}_time_delta`] = +(compTimeArr[compIdx] - refTimeArr[i]).toFixed(3);
+        pt[`${s.driver}_speed_delta`] = (t.speed[idx] ?? 0) - (ref.telemetry.speed[i] ?? 0);
+        const dd = deltaMap.get(s.driver);
+        pt[`${s.driver}_time_delta`] = dd ? +(dd[i]).toFixed(4) : 0;
       }
     }
     data.push(pt);
@@ -134,40 +145,27 @@ function buildChartData(selected: SelectedLap[], corners: CornerInfo[]) {
   return { data, cornerAxis };
 }
 
-// ──────── Zoom Hook ────────
+// ──────── Zoom via wrapper div ────────
 function useChartZoom() {
   const [zoomArea, setZoomArea] = useState<{ start: number; end: number } | null>(null);
-  const dragRef = useRef<{ start: number | null }>({ start: null });
-
-  const onMouseDown = useCallback((e: any) => {
-    if (e?.activeLabel != null) dragRef.current.start = e.activeLabel;
-  }, []);
-
-  const onMouseMove = useCallback((e: any) => {
-    if (dragRef.current.start != null && e?.activeLabel != null) {
-      const s = Math.min(dragRef.current.start, e.activeLabel);
-      const en = Math.max(dragRef.current.start, e.activeLabel);
-      if (en - s > 50) setZoomArea({ start: s, end: en });
-    }
-  }, []);
-
-  const onMouseUp = useCallback(() => { dragRef.current.start = null; }, []);
-  const resetZoom = useCallback(() => { setZoomArea(null); dragRef.current.start = null; }, []);
-
-  return { zoomArea, onMouseDown, onMouseMove, onMouseUp, resetZoom };
+  return {
+    zoomArea,
+    setZoomArea,
+    resetZoom: useCallback(() => setZoomArea(null), []),
+  };
 }
 
 // ──────── Telemetry Chart ────────
 function TelemetryChart({
   title, icon: Icon, chartColor, unit, chartData, laps, height = 200, domain,
-  chartType = "line", dataKeySuffix, zoom, corners, onHover, baselineSolid = false,
+  chartType = "line", dataKeySuffix, zoom, corners, onHover, refColor,
 }: {
   title: string; icon: any; chartColor: string; unit: string;
   chartData: any[]; laps: SelectedLap[]; height?: number;
   domain?: [number, number]; chartType?: "line" | "area" | "step";
   dataKeySuffix?: string; zoom?: { start: number; end: number } | null;
   corners?: CornerInfo[]; onHover?: (d: number | null) => void;
-  baselineSolid?: boolean;
+  refColor?: string;
 }) {
   const suffix = dataKeySuffix || title.toLowerCase().replace(/\s/g, "_");
   const Comp = chartType === "area" ? AreaChart : LineChart;
@@ -186,16 +184,10 @@ function TelemetryChart({
         <h3 className="text-sm font-bold" style={{ color: chartColor }}>{title}</h3>
         {unit && <span className="text-xs text-white/40">{unit}</span>}
       </div>
-      <div>
       <ResponsiveContainer width="100%" height={height}>
-        <Comp
-          data={displayData}
-          margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
-        >
+        <Comp data={displayData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-          <XAxis
-            dataKey="distance"
-            tick={{ fontSize: 10, fill: "rgba(255,255,255,0.4)" }}
+          <XAxis dataKey="distance" tick={{ fontSize: 10, fill: "rgba(255,255,255,0.4)" }}
             stroke="rgba(255,255,255,0.1)"
             tickFormatter={(v: number) => {
               if (!corners?.length) return `${(v / 1000).toFixed(1)}k`;
@@ -203,67 +195,39 @@ function TelemetryChart({
               for (const c of corners) { const d = Math.abs(v - c.distance); if (d < minD) { closest = c; minD = d; } }
               return minD < 150 ? `T${closest.number}` : "";
             }}
-            interval={corners?.length ? Math.max(1, Math.floor(displayData.length / (corners.length * 2))) : "preserveStartEnd"}
           />
           <YAxis tick={{ fontSize: 10, fill: "rgba(255,255,255,0.4)" }} stroke="rgba(255,255,255,0.1)" domain={domain} />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "#1B2A4A", border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: "8px", fontSize: "12px", color: "white",
-            }}
-            labelFormatter={(v: any) => `${Number(v).toLocaleString()}m`}
-          />
+          <Tooltip contentStyle={{ backgroundColor: "#1B2A4A", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "8px", fontSize: "12px", color: "white" }}
+            labelFormatter={(v: any) => `${Number(v).toLocaleString()}m`} />
           {isDelta && (
-            <ReferenceLine
-              y={0}
-              stroke={baselineSolid ? (laps[0]?.color || "#FFC71F") : "rgba(255,255,255,0.3)"}
-              strokeWidth={baselineSolid ? 2 : 1}
-              strokeDasharray={baselineSolid ? undefined : "3 3"}
-            />
+            <ReferenceLine y={0} stroke={refColor || "#FFC71F"} strokeWidth={2} />
           )}
           {zoom && <ReferenceArea x1={zoom.start} x2={zoom.end} fill="rgba(255,199,31,0.08)" />}
           {laps.map((lap) => (
-            <Child
-              key={`${lap.driver}_${suffix}`}
-              type={chartType === "step" ? "stepAfter" : "linear"}
-              dataKey={`${lap.driver}_${suffix}`}
-              stroke={lap.color}
-              fill={lap.color}
-              fillOpacity={chartType === "area" ? 0.1 : 0}
-              strokeWidth={lap.isRef ? 2.5 : 1.8}
-              dot={false}
-              isAnimationActive={false}
-              connectNulls
-            />
+            <Child key={`${lap.driver}_${suffix}`} type={chartType === "step" ? "stepAfter" : "linear"}
+              dataKey={`${lap.driver}_${suffix}`} stroke={lap.color} fill={lap.color}
+              fillOpacity={chartType === "area" ? 0.1 : 0} strokeWidth={lap.isRef ? 2.5 : 1.8}
+              dot={false} isAnimationActive={false} connectNulls />
           ))}
         </Comp>
       </ResponsiveContainer>
-      </div>
     </div>
   );
 }
 
 // ──────── Lap Popup ────────
-function LapPopup({
-  driver, laps, driverFastestTime, color, onSelect, onClose,
-}: {
+function LapPopup({ driver, laps, driverFastestTime, color, onSelect, onClose }: {
   driver: DriverInfo; laps: LapInfo[]; driverFastestTime: number;
   color: string; onSelect: (lap: LapInfo) => void; onClose: () => void;
 }) {
   const sorted = [...laps].sort((a, b) => a.lapNumber - b.lapNumber);
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="mx-4 flex w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `3px solid ${color}` }}>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-black text-white" style={{ backgroundColor: color }}>
-              {driver.code}
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-navy">{driver.name}</h3>
-              <p className="text-xs text-body">{driver.team}</p>
-            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-black text-white" style={{ backgroundColor: color }}>{driver.code}</div>
+            <div><h3 className="text-lg font-bold text-navy">{driver.name}</h3><p className="text-xs text-body">{driver.team}</p></div>
           </div>
           <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full text-body hover:bg-silver/20"><X size={20} /></button>
         </div>
@@ -274,9 +238,7 @@ function LapPopup({
               const isFastest = Math.abs(lap.lapTime - driverFastestTime) < 0.001;
               return (
                 <button key={lap.lapNumber} onClick={() => onSelect(lap)}
-                  className={`flex w-full items-center justify-between rounded-lg px-4 py-2.5 text-sm transition-colors ${
-                    isFastest ? "bg-green-50 ring-1 ring-green-300 hover:bg-green-100" : "hover:bg-silver/10"
-                  }`}>
+                  className={`flex w-full items-center justify-between rounded-lg px-4 py-2.5 text-sm transition-colors ${isFastest ? "bg-green-50 ring-1 ring-green-300 hover:bg-green-100" : "hover:bg-silver/10"}`}>
                   <div className="flex items-center gap-3">
                     <span className="w-8 text-center font-bold text-navy">L{lap.lapNumber}</span>
                     <CompoundBadge compound={lap.compound} />
@@ -316,6 +278,10 @@ export default function TelemetryCompare() {
   const rpmZoom = useChartZoom();
   const allZooms = [speedZoom, dsZoom, tdZoom, thrZoom, brkZoom, gearZoom, rpmZoom];
 
+  // Zoom drag state
+  const dragRef = useRef<{ startX: number | null; chartId: string | null }>({ startX: null, chartId: null });
+  const [dragPreview, setDragPreview] = useState<{ start: number; end: number; chartId: string } | null>(null);
+
   useEffect(() => {
     fetch("/data/telemetry/index.json").then((r) => r.json()).then((d) => setCachedSessions(d.sessions || [])).catch(() => setCachedSessions([]));
   }, []);
@@ -325,9 +291,7 @@ export default function TelemetryCompare() {
     for (const s of cachedSessions) { const k = `${s.year}_${s.gp}`; if (!map.has(k)) map.set(k, { gp: s.gp, year: s.year }); }
     return Array.from(map.values());
   }, [cachedSessions]);
-
   const availableSessions = useMemo(() => cachedSessions.filter((s) => s.gp === selectedGP).map((s) => s.session), [cachedSessions, selectedGP]);
-
   useEffect(() => { if (availableGPs.length > 0 && !selectedGP) setSelectedGP(availableGPs[0].gp); }, [availableGPs, selectedGP]);
   useEffect(() => { if (availableSessions.length > 0 && !availableSessions.includes(selectedSession)) setSelectedSession(availableSessions[0]); }, [availableSessions, selectedSession]);
 
@@ -339,30 +303,21 @@ export default function TelemetryCompare() {
       if (!c) throw new Error("Session not cached");
       const res = await fetch(`/data/telemetry/${c.filename}`);
       if (!res.ok) throw new Error("File not found");
-
       let text: string;
       if (c.filename.endsWith(".gz")) {
-        // Decompress gzip in browser
         const ds = new DecompressionStream("gzip");
         const reader = res.body!.pipeThrough(ds).getReader();
         const chunks: Uint8Array[] = [];
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          chunks.push(value);
-        }
+        while (true) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); }
         const totalLen = chunks.reduce((s, c) => s + c.length, 0);
         const merged = new Uint8Array(totalLen);
         let offset = 0;
         for (const chunk of chunks) { merged.set(chunk, offset); offset += chunk.length; }
         text = new TextDecoder().decode(merged);
-      } else {
-        text = await res.text();
-      }
+      } else { text = await res.text(); }
       setSessionData(JSON.parse(text));
     } catch (e: any) { setError(e.message); setSessionData(null); } finally { setLoading(false); }
   }, [selectedGP, selectedSession, cachedSessions]);
-
   useEffect(() => { if (selectedGP && selectedSession) loadSession(); }, [selectedGP, selectedSession, loadSession]);
 
   const selectLap = (lap: LapInfo) => {
@@ -384,7 +339,38 @@ export default function TelemetryCompare() {
     return { finalLaps: selectedLaps.map((l) => ({ ...l, isRef: Math.abs(l.lapTime - gFast) < 0.001 })), driverInfoMap: dMap, driverFastestMap: fastest };
   }, [selectedLaps, sessionData]);
 
-  const { data: chartData } = useMemo(() => buildChartData(finalLaps, sessionData?.corners || []), [finalLaps, sessionData]);
+  const refLap = useMemo(() => finalLaps.find((l) => l.isRef) || finalLaps[0], [finalLaps]);
+  const chartDataResult = useMemo(() => buildChartData(finalLaps, sessionData?.corners || []), [finalLaps, sessionData]);
+  const chartData = chartDataResult.data;
+
+  // Zoom drag handlers on wrapper
+  const getDataIndex = useCallback((clientX: number, chartEl: HTMLElement): number | null => {
+    const wrapper = chartEl.closest(".chart-wrapper");
+    if (!wrapper) return null;
+    const rect = wrapper.getBoundingClientRect();
+    const ratio = (clientX - rect.left) / rect.width;
+    return Math.round(ratio * (chartData.length - 1));
+  }, [chartData.length]);
+
+  const handleDragStart = useCallback((e: React.MouseEvent, chartId: string) => {
+    const idx = getDataIndex(e.clientX, e.target as HTMLElement);
+    if (idx != null) dragRef.current = { startX: idx, chartId };
+  }, [getDataIndex]);
+
+  const handleDragMove = useCallback((e: React.MouseEvent, chartId: string, zoomSetter: (v: { start: number; end: number } | null) => void) => {
+    if (dragRef.current.startX == null || dragRef.current.chartId !== chartId) return;
+    const idx = getDataIndex(e.clientX, e.target as HTMLElement);
+    if (idx == null) return;
+    const s = Math.min(dragRef.current.startX, idx);
+    const en = Math.max(dragRef.current.startX, idx);
+    if (en - s > 3) {
+      const startDist = chartData[s]?.distance;
+      const endDist = chartData[en]?.distance;
+      if (startDist != null && endDist != null) zoomSetter({ start: startDist, end: endDist });
+    }
+  }, [chartData, getDataIndex]);
+
+  const handleDragEnd = useCallback(() => { dragRef.current = { startX: null, chartId: null }; }, []);
 
   const downloadPNG = useCallback(async () => {
     if (!chartRef.current) return;
@@ -399,9 +385,7 @@ export default function TelemetryCompare() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       <div className="mb-8 text-center">
-        <span className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/15 px-5 py-1.5 text-sm font-bold text-primary">
-          <GitCompareArrows className="h-4 w-4" /> Telemetry Compare
-        </span>
+        <span className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/15 px-5 py-1.5 text-sm font-bold text-primary"><GitCompareArrows className="h-4 w-4" /> Telemetry Compare</span>
         <h1 className="mt-3 text-3xl font-black text-navy md:text-4xl">مقایسه تله‌متری رانندگان</h1>
       </div>
 
@@ -410,8 +394,7 @@ export default function TelemetryCompare() {
         <div className="flex flex-wrap items-end gap-4">
           <div className="flex-1 min-w-[250px]">
             <label className="mb-1 block text-xs font-bold text-navy">Grand Prix</label>
-            <select value={selectedGP} onChange={(e) => setSelectedGP(e.target.value)}
-              className="w-full rounded-lg border border-silver/50 bg-white px-4 py-2.5 text-sm text-navy outline-none focus:border-primary">
+            <select value={selectedGP} onChange={(e) => setSelectedGP(e.target.value)} className="w-full rounded-lg border border-silver/50 bg-white px-4 py-2.5 text-sm text-navy outline-none focus:border-primary">
               <option value="">-- انتخاب GP --</option>
               {availableGPs.map((g) => <option key={`${g.year}_${g.gp}`} value={g.gp}>{g.year} {g.gp}</option>)}
             </select>
@@ -422,8 +405,7 @@ export default function TelemetryCompare() {
               {["FP1", "FP2", "FP3", "Q", "SQ", "S", "R"].map((s) => {
                 const ok = availableSessions.includes(s);
                 return <button key={s} onClick={() => ok && setSelectedSession(s)} disabled={!ok}
-                  className={`rounded-lg px-3 py-2 text-xs font-bold transition-colors ${selectedSession === s ? "bg-navy text-white" : ok ? "bg-silver/15 text-body hover:bg-silver/30" : "bg-silver/5 text-silver/50 cursor-not-allowed"}`}
-                  title={ok ? SESSION_LABELS[s] : "داده موجود نیست"}>{s}</button>;
+                  className={`rounded-lg px-3 py-2 text-xs font-bold transition-colors ${selectedSession === s ? "bg-navy text-white" : ok ? "bg-silver/15 text-body hover:bg-silver/30" : "bg-silver/5 text-silver/50 cursor-not-allowed"}`}>{s}</button>;
               })}
             </div>
           </div>
@@ -465,21 +447,19 @@ export default function TelemetryCompare() {
         </div>
       )}
 
-      {/* Track Maps + Charts */}
-      {finalLaps.length >= 2 && (
+      {/* Charts */}
+      {finalLaps.length >= 2 && chartData.length > 0 && (
         <div ref={chartRef} className="space-y-4 rounded-2xl bg-navy p-4">
           {/* Track Maps */}
           <div className="grid gap-4 md:grid-cols-2">
-            <TrackMap laps={finalLaps} corners={sessionData?.corners || []} trackRotation={sessionData?.trackRotation || 0}
-              hoverDistance={hoverDistance} onHover={setHoverDistance} mode="speed" />
-            <TrackMap laps={finalLaps} corners={sessionData?.corners || []} trackRotation={sessionData?.trackRotation || 0}
-              hoverDistance={hoverDistance} onHover={setHoverDistance} mode="dominance" />
+            <TrackMap laps={finalLaps} corners={sessionData?.corners || []} trackRotation={sessionData?.trackRotation || 0} hoverDistance={hoverDistance} onHover={setHoverDistance} mode="speed" />
+            <TrackMap laps={finalLaps} corners={sessionData?.corners || []} trackRotation={sessionData?.trackRotation || 0} hoverDistance={hoverDistance} onHover={setHoverDistance} mode="dominance" />
           </div>
 
           {/* Legend */}
           <div className="flex flex-wrap items-center gap-4 rounded-xl bg-white/5 px-4 py-3">
             {finalLaps.map((lap) => {
-              const delta = lap.isRef ? 0 : lap.lapTime - (finalLaps.find((l) => l.isRef)?.lapTime || 0);
+              const delta = lap.isRef ? 0 : lap.lapTime - (refLap?.lapTime || 0);
               return (
                 <div key={lap.driver} className="flex items-center gap-2">
                   <div className="h-3 w-6 rounded-full" style={{ backgroundColor: lap.color }} />
@@ -487,7 +467,7 @@ export default function TelemetryCompare() {
                   <span className="text-xs font-bold text-white">{driverInfoMap[lap.driver]?.name || lap.driver}</span>
                   <span className="font-mono text-[10px] text-white/50">
                     L{lap.lapNumber} · {fmt(lap.lapTime)}
-                    {lap.isRef ? " · REF" : ` · ${fmtDelta(delta)}s`}
+                    {lap.isRef ? <span className="text-primary"> · REF</span> : <span className="text-red-400"> · {fmtDelta(delta)}s</span>}
                   </span>
                 </div>
               );
@@ -502,25 +482,43 @@ export default function TelemetryCompare() {
 
           {expandedCharts && (
             <>
-              <TelemetryChart title="Speed" icon={Gauge} chartColor="#22E6EC" unit="km/h"
-                chartData={chartData} laps={finalLaps} height={220} zoom={speedZoom.zoomArea} corners={sessionData?.corners} onHover={setHoverDistance} />
-              <TelemetryChart title="Speed Delta" icon={GitCompareArrows} chartColor="#FACC15" unit="km/h"
-                chartData={chartData} laps={finalLaps.filter((l) => !l.isRef)} height={180}
-                dataKeySuffix="speed_delta" zoom={dsZoom.zoomArea} corners={sessionData?.corners} onHover={setHoverDistance} baselineSolid />
-              <TelemetryChart title="Time Delta" icon={Timer} chartColor="#F97316" unit="s"
-                chartData={chartData} laps={finalLaps.filter((l) => !l.isRef)} height={180}
-                dataKeySuffix="time_delta" zoom={tdZoom.zoomArea} corners={sessionData?.corners} onHover={setHoverDistance} baselineSolid />
-              <TelemetryChart title="Throttle" icon={Zap} chartColor="#4ADE80" unit="%"
-                chartData={chartData} laps={finalLaps} height={160} domain={[0, 100]}
-                zoom={thrZoom.zoomArea} corners={sessionData?.corners} onHover={setHoverDistance} />
-              <TelemetryChart title="Brake" icon={RotateCcw} chartColor="#EF4444" unit=""
-                chartData={chartData} laps={finalLaps} height={100} chartType="step"
-                zoom={brkZoom.zoomArea} corners={sessionData?.corners} onHover={setHoverDistance} />
-              <TelemetryChart title="Gear" icon={Disc} chartColor="#A78BFA" unit=""
-                chartData={chartData} laps={finalLaps} height={160} chartType="step" domain={[0, 8]}
-                zoom={gearZoom.zoomArea} corners={sessionData?.corners} onHover={setHoverDistance} />
-              <TelemetryChart title="RPM" icon={Radar} chartColor="#FB923C" unit="rpm"
-                chartData={chartData} laps={finalLaps} height={160} zoom={rpmZoom.zoomArea} corners={sessionData?.corners} onHover={setHoverDistance} />
+              {/* Speed */}
+              <div className="chart-wrapper" onMouseDown={(e) => handleDragStart(e, "speed")} onMouseMove={(e) => handleDragMove(e, "speed", speedZoom.setZoomArea)} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
+                <TelemetryChart title="Speed" icon={Gauge} chartColor="#22E6EC" unit="km/h" chartData={chartData} laps={finalLaps} height={220}
+                  zoom={speedZoom.zoomArea} corners={sessionData?.corners} onHover={setHoverDistance} refColor={refLap?.color} />
+              </div>
+              {/* Speed Delta */}
+              <div className="chart-wrapper" onMouseDown={(e) => handleDragStart(e, "ds")} onMouseMove={(e) => handleDragMove(e, "ds", dsZoom.setZoomArea)} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
+                <TelemetryChart title="Speed Delta" icon={GitCompareArrows} chartColor="#FACC15" unit="km/h" chartData={chartData}
+                  laps={finalLaps.filter((l) => !l.isRef)} height={180} dataKeySuffix="speed_delta" zoom={dsZoom.zoomArea}
+                  corners={sessionData?.corners} onHover={setHoverDistance} refColor={refLap?.color} />
+              </div>
+              {/* Time Delta */}
+              <div className="chart-wrapper" onMouseDown={(e) => handleDragStart(e, "td")} onMouseMove={(e) => handleDragMove(e, "td", tdZoom.setZoomArea)} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
+                <TelemetryChart title="Time Delta" icon={Timer} chartColor="#F97316" unit="s" chartData={chartData}
+                  laps={finalLaps.filter((l) => !l.isRef)} height={180} dataKeySuffix="time_delta" zoom={tdZoom.zoomArea}
+                  corners={sessionData?.corners} onHover={setHoverDistance} refColor={refLap?.color} />
+              </div>
+              {/* Throttle */}
+              <div className="chart-wrapper" onMouseDown={(e) => handleDragStart(e, "thr")} onMouseMove={(e) => handleDragMove(e, "thr", thrZoom.setZoomArea)} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
+                <TelemetryChart title="Throttle" icon={Zap} chartColor="#4ADE80" unit="%" chartData={chartData} laps={finalLaps} height={160}
+                  domain={[0, 100]} zoom={thrZoom.zoomArea} corners={sessionData?.corners} onHover={setHoverDistance} refColor={refLap?.color} />
+              </div>
+              {/* Brake */}
+              <div className="chart-wrapper" onMouseDown={(e) => handleDragStart(e, "brk")} onMouseMove={(e) => handleDragMove(e, "brk", brkZoom.setZoomArea)} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
+                <TelemetryChart title="Brake" icon={RotateCcw} chartColor="#EF4444" unit="" chartData={chartData} laps={finalLaps} height={100}
+                  chartType="step" zoom={brkZoom.zoomArea} corners={sessionData?.corners} onHover={setHoverDistance} refColor={refLap?.color} />
+              </div>
+              {/* Gear */}
+              <div className="chart-wrapper" onMouseDown={(e) => handleDragStart(e, "gear")} onMouseMove={(e) => handleDragMove(e, "gear", gearZoom.setZoomArea)} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
+                <TelemetryChart title="Gear" icon={Disc} chartColor="#A78BFA" unit="" chartData={chartData} laps={finalLaps} height={160}
+                  chartType="step" domain={[0, 8]} zoom={gearZoom.zoomArea} corners={sessionData?.corners} onHover={setHoverDistance} refColor={refLap?.color} />
+              </div>
+              {/* RPM */}
+              <div className="chart-wrapper" onMouseDown={(e) => handleDragStart(e, "rpm")} onMouseMove={(e) => handleDragMove(e, "rpm", rpmZoom.setZoomArea)} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
+                <TelemetryChart title="RPM" icon={Radar} chartColor="#FB923C" unit="rpm" chartData={chartData} laps={finalLaps} height={160}
+                  zoom={rpmZoom.zoomArea} corners={sessionData?.corners} onHover={setHoverDistance} refColor={refLap?.color} />
+              </div>
             </>
           )}
         </div>
