@@ -15,6 +15,7 @@ import TrackMap from "./TrackMap";
 interface TelemetryData {
   distance: number[]; speed: number[]; throttle: number[]; brake: number[];
   rpm: number[]; gear: number[]; drs: number[]; x: number[]; y: number[];
+  time: number[];
 }
 interface LapInfo {
   driver: string; lapNumber: number; lapTime: number; isFastest: boolean;
@@ -54,44 +55,30 @@ function CompoundBadge({ compound }: { compound: string }) {
 
 // ──────── Python delta_time implementation ────────
 // Matches: delta_time(reference_lap, compare_lap) from telemetries_compare.py
+// Uses actual Time column from get_car_data, not computed from speed
 function computeTimeDelta(
-  refDist: number[], refSpeed: number[],
-  compDist: number[], compSpeed: number[]
+  refDist: number[], refTime: number[],
+  compDist: number[], compTime: number[]
 ): number[] {
   const refLen = refDist.length;
   const compLen = compDist.length;
   if (refLen < 2 || compLen < 2) return new Array(refLen).fill(0);
 
-  // Build cumulative time arrays from distance + speed (like get_car_data Time column)
-  const buildTime = (dist: number[], spd: number[]): number[] => {
-    const time = [0];
-    for (let i = 1; i < dist.length; i++) {
-      const dd = dist[i] - dist[i - 1]; // meters
-      const avgMs = ((spd[i - 1] + spd[i]) / 2) / 3.6; // km/h -> m/s
-      time.push(time[i - 1] + (avgMs > 0.5 ? dd / avgMs : 0));
-    }
-    return time;
-  };
-
-  const refTime = buildTime(refDist, refSpeed);
-  const compTime = buildTime(compDist, compSpeed);
-
   // Python: multiplier = ref.Distance.iat[-1] / comp.Distance.iat[-1]
-  const refTotalDist = refDist[refLen - 1];
-  const compTotalDist = compDist[compLen - 1];
-  const multiplier = refTotalDist / compTotalDist;
+  const multiplier = refDist[refLen - 1] / compDist[compLen - 1];
 
-  // Python: ldistance = mini_pro(comp.Distance) * multiplier
-  // mini_pro extrapolates first and last points
+  // Python: mini_pro extrapolates first/last values
   const compDistExt = [compDist[0] - (compDist[1] - compDist[0]), ...compDist, compDist[compLen - 1] + (compDist[compLen - 1] - compDist[compLen - 2])];
   const compTimeExt = [compTime[0] - (compTime[1] - compTime[0]), ...compTime, compTime[compLen - 1] + (compTime[compLen - 1] - compTime[compLen - 2])];
   const scaledDist = compDistExt.map((d) => d * multiplier);
 
   // Python: lap_time = np.interp(ref['Distance'], ldistance, ltime)
   // Python: delta = lap_time - ref['Time'].dt.total_seconds()
-  const delta = refDist.map((rd, i) => {
-    // Interpolate comp time at this reference distance
-    let ct = 0;
+  const delta = new Array(refLen);
+  for (let i = 0; i < refLen; i++) {
+    const rd = refDist[i];
+    // Linear interpolation in scaledDist -> compTimeExt
+    let ct = compTimeExt[0];
     for (let j = 0; j < scaledDist.length - 1; j++) {
       if (rd >= scaledDist[j] && rd <= scaledDist[j + 1]) {
         const t = (rd - scaledDist[j]) / (scaledDist[j + 1] - scaledDist[j] || 1);
@@ -99,9 +86,8 @@ function computeTimeDelta(
         break;
       }
     }
-    return ct - refTime[i];
-  });
-
+    delta[i] = ct - refTime[i];
+  }
   return delta;
 }
 
@@ -113,12 +99,15 @@ function buildChartData(selected: SelectedLap[], corners: CornerInfo[]) {
   const cornerAxis = corners.map((c) => ({ distance: c.distance, label: c.number }));
 
   // Pre-compute time delta for each non-ref lap (like Python delta_time)
+  // Uses actual Time column from JSON (matches Python get_car_data Time)
   const deltaMap = new Map<string, number[]>();
   for (const s of selected) {
     if (s.isRef) continue;
+    const refTime = ref.telemetry.time?.length ? ref.telemetry.time : ref.telemetry.distance.map(() => 0);
+    const compTime = s.telemetry.time?.length ? s.telemetry.time : s.telemetry.distance.map(() => 0);
     deltaMap.set(s.driver, computeTimeDelta(
-      ref.telemetry.distance, ref.telemetry.speed,
-      s.telemetry.distance, s.telemetry.speed
+      ref.telemetry.distance, refTime,
+      s.telemetry.distance, compTime
     ));
   }
 
@@ -153,6 +142,20 @@ function useChartZoom() {
     setZoomArea,
     resetZoom: useCallback(() => setZoomArea(null), []),
   };
+}
+
+// ──────── Drag selection overlay (like GP Tempo) ────────
+function DragOverlay({ preview, chartData }: { preview: { startIdx: number; endIdx: number }; chartData: any[] }) {
+  const total = chartData.length;
+  if (total < 2) return null;
+  const left = (preview.startIdx / total) * 100;
+  const width = ((preview.endIdx - preview.startIdx) / total) * 100;
+  return (
+    <div className="pointer-events-none absolute inset-0 z-20" style={{ top: 0, left: 0, right: 0, bottom: 0 }}>
+      <div className="absolute top-0 bottom-0 bg-white/10 border-x border-white/40"
+        style={{ left: `${left}%`, width: `${width}%` }} />
+    </div>
+  );
 }
 
 // ──────── Telemetry Chart ────────
@@ -279,8 +282,8 @@ export default function TelemetryCompare() {
   const allZooms = [speedZoom, dsZoom, tdZoom, thrZoom, brkZoom, gearZoom, rpmZoom];
 
   // Zoom drag state
-  const dragRef = useRef<{ startX: number | null; chartId: string | null }>({ startX: null, chartId: null });
-  const [dragPreview, setDragPreview] = useState<{ start: number; end: number; chartId: string } | null>(null);
+  const dragRef = useRef<{ startX: number | null; chartId: string | null; wrapperEl: HTMLElement | null }>({ startX: null, chartId: null, wrapperEl: null });
+  const [dragPreview, setDragPreview] = useState<{ startIdx: number; endIdx: number; chartId: string } | null>(null);
 
   useEffect(() => {
     fetch("/data/telemetry/index.json").then((r) => r.json()).then((d) => setCachedSessions(d.sessions || [])).catch(() => setCachedSessions([]));
@@ -343,34 +346,53 @@ export default function TelemetryCompare() {
   const chartDataResult = useMemo(() => buildChartData(finalLaps, sessionData?.corners || []), [finalLaps, sessionData]);
   const chartData = chartDataResult.data;
 
-  // Zoom drag handlers on wrapper
-  const getDataIndex = useCallback((clientX: number, chartEl: HTMLElement): number | null => {
-    const wrapper = chartEl.closest(".chart-wrapper");
-    if (!wrapper) return null;
-    const rect = wrapper.getBoundingClientRect();
-    const ratio = (clientX - rect.left) / rect.width;
+  // Zoom drag handlers — like GP Tempo click-and-drag
+  const getChartIndex = useCallback((clientX: number, wrapper: HTMLElement): number | null => {
+    // Find the .recharts-wrapper inside the chart-wrapper
+    const recharts = wrapper.querySelector(".recharts-wrapper") as HTMLElement;
+    if (!recharts) return null;
+    const rect = recharts.getBoundingClientRect();
+    // Account for margins (left ~10px for YAxis)
+    const margin = 30;
+    const usableWidth = rect.width - margin;
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left - margin) / usableWidth));
     return Math.round(ratio * (chartData.length - 1));
   }, [chartData.length]);
 
-  const handleDragStart = useCallback((e: React.MouseEvent, chartId: string) => {
-    const idx = getDataIndex(e.clientX, e.target as HTMLElement);
-    if (idx != null) dragRef.current = { startX: idx, chartId };
-  }, [getDataIndex]);
+  const handleDragStart = useCallback((e: React.MouseEvent, chartId: string, zoomSetter: (v: { start: number; end: number } | null) => void) => {
+    const wrapper = (e.target as HTMLElement).closest(".chart-wrapper") as HTMLElement;
+    if (!wrapper) return;
+    const idx = getChartIndex(e.clientX, wrapper);
+    if (idx != null) {
+      dragRef.current = { startX: idx, chartId, wrapperEl: wrapper };
+      // Store the zoom setter for this chart
+      (wrapper as any).__zoomSetter = zoomSetter;
+    }
+  }, [getChartIndex]);
 
-  const handleDragMove = useCallback((e: React.MouseEvent, chartId: string, zoomSetter: (v: { start: number; end: number } | null) => void) => {
-    if (dragRef.current.startX == null || dragRef.current.chartId !== chartId) return;
-    const idx = getDataIndex(e.clientX, e.target as HTMLElement);
+  const handleDragMove = useCallback((e: React.MouseEvent, chartId: string) => {
+    if (dragRef.current.startX == null || dragRef.current.chartId !== chartId || !dragRef.current.wrapperEl) return;
+    const idx = getChartIndex(e.clientX, dragRef.current.wrapperEl);
     if (idx == null) return;
     const s = Math.min(dragRef.current.startX, idx);
     const en = Math.max(dragRef.current.startX, idx);
-    if (en - s > 3) {
-      const startDist = chartData[s]?.distance;
-      const endDist = chartData[en]?.distance;
-      if (startDist != null && endDist != null) zoomSetter({ start: startDist, end: endDist });
+    if (en - s > 2) {
+      setDragPreview({ startIdx: s, endIdx: en, chartId });
     }
-  }, [chartData, getDataIndex]);
+  }, [getChartIndex]);
 
-  const handleDragEnd = useCallback(() => { dragRef.current = { startX: null, chartId: null }; }, []);
+  const handleDragEnd = useCallback(() => {
+    if (dragPreview && dragRef.current.wrapperEl) {
+      const zoomSetter = (dragRef.current.wrapperEl as any).__zoomSetter;
+      if (zoomSetter) {
+        const startDist = chartData[dragPreview.startIdx]?.distance;
+        const endDist = chartData[dragPreview.endIdx]?.distance;
+        if (startDist != null && endDist != null) zoomSetter({ start: startDist, end: endDist });
+      }
+    }
+    dragRef.current = { startX: null, chartId: null, wrapperEl: null };
+    setDragPreview(null);
+  }, [dragPreview, chartData]);
 
   const downloadPNG = useCallback(async () => {
     if (!chartRef.current) return;
@@ -483,41 +505,49 @@ export default function TelemetryCompare() {
           {expandedCharts && (
             <>
               {/* Speed */}
-              <div className="chart-wrapper" onMouseDown={(e) => handleDragStart(e, "speed")} onMouseMove={(e) => handleDragMove(e, "speed", speedZoom.setZoomArea)} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
+              <div className="chart-wrapper relative cursor-crosshair select-none" onMouseDown={(e) => handleDragStart(e, "speed", speedZoom.setZoomArea)} onMouseMove={(e) => handleDragMove(e, "speed")} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
+                <span className="absolute top-2 right-4 z-10 text-[10px] text-white/30">🖱️ Click and drag to zoom</span>
                 <TelemetryChart title="Speed" icon={Gauge} chartColor="#22E6EC" unit="km/h" chartData={chartData} laps={finalLaps} height={220}
                   zoom={speedZoom.zoomArea} corners={sessionData?.corners} onHover={setHoverDistance} refColor={refLap?.color} />
+                {dragPreview?.chartId === "speed" && <DragOverlay preview={dragPreview} chartData={chartData} />}
               </div>
               {/* Speed Delta */}
-              <div className="chart-wrapper" onMouseDown={(e) => handleDragStart(e, "ds")} onMouseMove={(e) => handleDragMove(e, "ds", dsZoom.setZoomArea)} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
+              <div className="chart-wrapper relative cursor-crosshair select-none" onMouseDown={(e) => handleDragStart(e, "ds", dsZoom.setZoomArea)} onMouseMove={(e) => handleDragMove(e, "ds")} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
                 <TelemetryChart title="Speed Delta" icon={GitCompareArrows} chartColor="#FACC15" unit="km/h" chartData={chartData}
                   laps={finalLaps.filter((l) => !l.isRef)} height={180} dataKeySuffix="speed_delta" zoom={dsZoom.zoomArea}
                   corners={sessionData?.corners} onHover={setHoverDistance} refColor={refLap?.color} />
+                {dragPreview?.chartId === "ds" && <DragOverlay preview={dragPreview} chartData={chartData} />}
               </div>
               {/* Time Delta */}
-              <div className="chart-wrapper" onMouseDown={(e) => handleDragStart(e, "td")} onMouseMove={(e) => handleDragMove(e, "td", tdZoom.setZoomArea)} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
+              <div className="chart-wrapper relative cursor-crosshair select-none" onMouseDown={(e) => handleDragStart(e, "td", tdZoom.setZoomArea)} onMouseMove={(e) => handleDragMove(e, "td")} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
                 <TelemetryChart title="Time Delta" icon={Timer} chartColor="#F97316" unit="s" chartData={chartData}
                   laps={finalLaps.filter((l) => !l.isRef)} height={180} dataKeySuffix="time_delta" zoom={tdZoom.zoomArea}
                   corners={sessionData?.corners} onHover={setHoverDistance} refColor={refLap?.color} />
+                {dragPreview?.chartId === "td" && <DragOverlay preview={dragPreview} chartData={chartData} />}
               </div>
               {/* Throttle */}
-              <div className="chart-wrapper" onMouseDown={(e) => handleDragStart(e, "thr")} onMouseMove={(e) => handleDragMove(e, "thr", thrZoom.setZoomArea)} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
+              <div className="chart-wrapper relative cursor-crosshair select-none" onMouseDown={(e) => handleDragStart(e, "thr", thrZoom.setZoomArea)} onMouseMove={(e) => handleDragMove(e, "thr")} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
                 <TelemetryChart title="Throttle" icon={Zap} chartColor="#4ADE80" unit="%" chartData={chartData} laps={finalLaps} height={160}
                   domain={[0, 100]} zoom={thrZoom.zoomArea} corners={sessionData?.corners} onHover={setHoverDistance} refColor={refLap?.color} />
+                {dragPreview?.chartId === "thr" && <DragOverlay preview={dragPreview} chartData={chartData} />}
               </div>
               {/* Brake */}
-              <div className="chart-wrapper" onMouseDown={(e) => handleDragStart(e, "brk")} onMouseMove={(e) => handleDragMove(e, "brk", brkZoom.setZoomArea)} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
+              <div className="chart-wrapper relative cursor-crosshair select-none" onMouseDown={(e) => handleDragStart(e, "brk", brkZoom.setZoomArea)} onMouseMove={(e) => handleDragMove(e, "brk")} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
                 <TelemetryChart title="Brake" icon={RotateCcw} chartColor="#EF4444" unit="" chartData={chartData} laps={finalLaps} height={100}
                   chartType="step" zoom={brkZoom.zoomArea} corners={sessionData?.corners} onHover={setHoverDistance} refColor={refLap?.color} />
+                {dragPreview?.chartId === "brk" && <DragOverlay preview={dragPreview} chartData={chartData} />}
               </div>
               {/* Gear */}
-              <div className="chart-wrapper" onMouseDown={(e) => handleDragStart(e, "gear")} onMouseMove={(e) => handleDragMove(e, "gear", gearZoom.setZoomArea)} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
+              <div className="chart-wrapper relative cursor-crosshair select-none" onMouseDown={(e) => handleDragStart(e, "gear", gearZoom.setZoomArea)} onMouseMove={(e) => handleDragMove(e, "gear")} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
                 <TelemetryChart title="Gear" icon={Disc} chartColor="#A78BFA" unit="" chartData={chartData} laps={finalLaps} height={160}
                   chartType="step" domain={[0, 8]} zoom={gearZoom.zoomArea} corners={sessionData?.corners} onHover={setHoverDistance} refColor={refLap?.color} />
+                {dragPreview?.chartId === "gear" && <DragOverlay preview={dragPreview} chartData={chartData} />}
               </div>
               {/* RPM */}
-              <div className="chart-wrapper" onMouseDown={(e) => handleDragStart(e, "rpm")} onMouseMove={(e) => handleDragMove(e, "rpm", rpmZoom.setZoomArea)} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
+              <div className="chart-wrapper relative cursor-crosshair select-none" onMouseDown={(e) => handleDragStart(e, "rpm", rpmZoom.setZoomArea)} onMouseMove={(e) => handleDragMove(e, "rpm")} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd}>
                 <TelemetryChart title="RPM" icon={Radar} chartColor="#FB923C" unit="rpm" chartData={chartData} laps={finalLaps} height={160}
                   zoom={rpmZoom.zoomArea} corners={sessionData?.corners} onHover={setHoverDistance} refColor={refLap?.color} />
+                {dragPreview?.chartId === "rpm" && <DragOverlay preview={dragPreview} chartData={chartData} />}
               </div>
             </>
           )}

@@ -276,6 +276,7 @@ def fetch_session_data(year, gp_name, session_type):
                         "drs": sampled["DRS"].astype(int).tolist() if "DRS" in sampled.columns else [0] * len(sampled),
                         "x": sampled["X"].round(1).tolist() if "X" in sampled.columns else [],
                         "y": sampled["Y"].round(1).tolist() if "Y" in sampled.columns else [],
+                        "time": sampled["Time"].dt.total_seconds().round(4).tolist() if "Time" in sampled.columns else [],
                     }
             except Exception as e:
                 print(f"  Warning: Could not get telemetry for {driver_code} L{lap['LapNumber']}: {e}")

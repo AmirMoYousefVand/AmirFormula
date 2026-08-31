@@ -263,29 +263,29 @@ export default function TrackMap({ laps, corners, trackRotation, hoverDistance, 
           viewBox={viewBox}
           preserveAspectRatio="xMidYMid meet"
           className="w-full"
-          style={{ display: "block", minHeight: "300px", maxHeight: "500px" }}
+          style={{ display: "block", minHeight: "350px", maxHeight: "550px", aspectRatio: "16/9" }}
           onMouseMove={handleMouseMove}
           onMouseLeave={() => { setHoveredIdx(null); onHover(null); }}
         >
           {/* Track shadow/background */}
           <polyline
             points={refX.map((x, i) => `${x},${refY[i]}`).join(" ")}
-            fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={44}
+            fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={56}
             strokeLinecap="round" strokeLinejoin="round"
           />
 
           {/* Track segments */}
           {segments.map((s, i) => (
             <line key={i} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2}
-              stroke={s.color} strokeWidth={12} strokeOpacity={s.opacity} strokeLinecap="round" />
+              stroke={s.color} strokeWidth={16} strokeOpacity={s.opacity} strokeLinecap="round" />
           ))}
 
           {/* Corner markers */}
           {rotCorners.map((c, i) => (
             <g key={i}>
-              <circle cx={c.rx} cy={c.ry} r={26} fill="#1B2A4A" stroke="rgba(255,255,255,0.5)" strokeWidth={2} />
+              <circle cx={c.rx} cy={c.ry} r={32} fill="#1B2A4A" stroke="rgba(255,255,255,0.6)" strokeWidth={2.5} />
               <text x={c.rx} y={c.ry + 1} textAnchor="middle" dominantBaseline="central"
-                fill="white" fontSize={16} fontWeight="bold" fontFamily="var(--font-space-grotesk)">
+                fill="white" fontSize={20} fontWeight="bold" fontFamily="var(--font-space-grotesk)">
                 {c.number}
               </text>
             </g>
