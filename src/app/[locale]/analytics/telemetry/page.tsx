@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import { setRequestLocale, getTranslations } from "next-intl/server";
-import TelemetryCompare from "@/components/analytics/TelemetryCompare";
+import { setRequestLocale } from "next-intl/server";
+import BestSectorsView from "@/components/analytics/BestSectorsView";
 
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
-  const { locale } = await params;
   return {
-    title: "Telemetry Compare | Amir Formula",
-    description: "Compare F1 driver telemetry data across sessions",
+    title: "Best Sectors | Amir Formula",
+    description:
+      "Every driver's best sectors and ideal lap times per F1 session",
   };
 }
 
@@ -22,5 +22,5 @@ export default async function TelemetryPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <TelemetryCompare />;
+  return <BestSectorsView />;
 }

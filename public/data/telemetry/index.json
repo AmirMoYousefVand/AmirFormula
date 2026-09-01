@@ -1,6 +1,36 @@
 {
   "sessions": [
     {
+      "filename": "2025_Australian_Grand_Prix_Q.json.gz",
+      "year": 2025,
+      "gp": "Australian Grand Prix",
+      "session": "Q",
+      "circuit": "Australian Grand Prix",
+      "drivers": [
+        "PIA",
+        "RUS",
+        "VER",
+        "LEC",
+        "ANT",
+        "SAI",
+        "ALB",
+        "HAM",
+        "TSU",
+        "NOR",
+        "BOR",
+        "GAS",
+        "HAD",
+        "STR",
+        "DOO",
+        "HUL",
+        "ALO",
+        "OCO",
+        "BEA",
+        "LAW"
+      ],
+      "lapCount": 203
+    },
+    {
       "filename": "2025_Australian_Grand_Prix_R.json.gz",
       "year": 2025,
       "gp": "Australian Grand Prix",
@@ -29,6 +59,38 @@
         "BEA"
       ],
       "lapCount": 858
+    },
+    {
+      "filename": "2026_Dutch_Grand_Prix_Q.json.gz",
+      "year": 2026,
+      "gp": "Dutch Grand Prix",
+      "session": "Q",
+      "circuit": "Dutch Grand Prix",
+      "drivers": [
+        "ANT",
+        "NOR",
+        "RUS",
+        "HAM",
+        "LEC",
+        "PIA",
+        "HUL",
+        "GAS",
+        "BOR",
+        "LIN",
+        "VER",
+        "ALO",
+        "COL",
+        "LAW",
+        "BEA",
+        "OCO",
+        "TSU",
+        "STR",
+        "ALB",
+        "BOT",
+        "PER",
+        "SAI"
+      ],
+      "lapCount": 271
     }
   ]
 }

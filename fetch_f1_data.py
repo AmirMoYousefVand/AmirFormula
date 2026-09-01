@@ -68,10 +68,10 @@ fastf1.Cache.enable_cache(str(CACHE_DIR))
 OUTPUT_DIR = Path(__file__).parent / "public" / "data" / "telemetry"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# 2025-2026 Team Colors (F1 official)
+# 2025-2026 Team Colors (F1 official broadcast palette, synced with fastf1/plotting/constants.json)
 TEAM_COLORS = {
     "McLaren": "#FF8000",
-    "Ferrari": "#E8002D",
+    "Ferrari": "#E80020",
     "Red Bull Racing": "#3671C6",
     "Mercedes": "#27F4D2",
     "Aston Martin": "#229971",
@@ -82,8 +82,8 @@ TEAM_COLORS = {
     "Kick Sauber": "#52E252",
     # 2026 names
     "Red Bull": "#3671C6",
-    "Cadillac": "#E5D07B",
-    "Audi": "#C8002F",
+    "Cadillac": "#444444",
+    "Audi": "#FF2D00",
     "Racing Bulls": "#6692FF",
 }
 
@@ -123,6 +123,95 @@ def get_team_color(team_name):
         if key.lower() in team_name.lower() or team_name.lower() in key.lower():
             return color
     return "#888888"
+
+
+def _get_last_name(full_name):
+    return full_name.split(" ")[-1] if " " in full_name else full_name
+
+
+def _filter_laps(laps):
+    """MAD outlier filter — matches filter_laps() in Python files/best_sectors.py."""
+    if laps.empty:
+        return laps
+    for col in ["PitInTime", "PitOutTime"]:
+        if col in laps.columns:
+            laps = laps[laps[col].isna()]
+    laps = laps[
+        ~laps["Sector1Time"].isna()
+        & ~laps["Sector2Time"].isna()
+        & ~laps["Sector3Time"].isna()
+        & ~laps["LapTime"].isna()
+    ]
+    if laps.empty:
+        return laps
+    for col in ["Sector1Time", "Sector2Time", "Sector3Time", "LapTime"]:
+        med = laps[col].median()
+        mad = (abs((laps[col] - med).dt.total_seconds())).median() + 1e-9
+        zscore = abs((laps[col] - med).dt.total_seconds()) / (mad * 1.4826)
+        laps = laps[zscore < 2.5]
+    return laps
+
+
+def compute_best_sectors(session, session_type):
+    """Compute per-driver best sector stats — matches best_sectors.py logic.
+
+    Always uses best sectors + ideal lap, for every session type
+    (practice, qualifying, race, sprint).
+    """
+    try:
+        results = session.results
+    except Exception as e:
+        print(f"  Warning: no results for bestSectors: {e}")
+        return None
+
+    drivers_out = []
+    for _, driver_info in results.iterrows():
+        d_num = str(driver_info.get("DriverNumber", "")).strip()
+        abbreviation = driver_info.get("Abbreviation", "")
+        full_name = driver_info.get("FullName", "") or abbreviation
+        team_name = driver_info.get("TeamName", "Unknown") or "Unknown"
+        headshot_url = driver_info.get("HeadshotUrl", "") or ""
+        if not d_num:
+            continue
+
+        try:
+            laps = session.laps.pick_drivers(d_num)
+        except Exception:
+            continue
+        if laps is None or laps.empty:
+            continue
+
+        laps_filt = _filter_laps(laps)
+        if laps_filt.empty:
+            continue
+
+        best_s1 = float(laps_filt["Sector1Time"].min().total_seconds())
+        best_s2 = float(laps_filt["Sector2Time"].min().total_seconds())
+        best_s3 = float(laps_filt["Sector3Time"].min().total_seconds())
+        ideal = best_s1 + best_s2 + best_s3
+        fastest_lap = laps_filt["LapTime"].min()
+        fastest_lap_s = (
+            float(fastest_lap.total_seconds()) if pd.notna(fastest_lap) else None
+        )
+        delta = round(fastest_lap_s - ideal, 6) if fastest_lap_s is not None else None
+        drivers_out.append({
+            "code": abbreviation,
+            "lastName": _get_last_name(str(full_name)),
+            "fullName": str(full_name),
+            "team": team_name,
+            "color": get_team_color(team_name),
+            "headshot": headshot_url,
+            "Sector1": round(best_s1, 6),
+            "Sector2": round(best_s2, 6),
+            "Sector3": round(best_s3, 6),
+            "Ideal": round(ideal, 6),
+            "FastestLap": fastest_lap_s,
+            "DeltaToIdeal": delta,
+        })
+
+    if not drivers_out:
+        return None
+    return {"drivers": drivers_out}
 
 
 def get_session_schedule(year):
@@ -202,6 +291,12 @@ def fetch_session_data(year, gp_name, session_type):
     except Exception as e:
         print(f"  Warning: Could not get circuit info (Network issue?): {e}")
         result["trackRotation"] = 0
+
+    try:
+        result["bestSectors"] = compute_best_sectors(session, session_type)
+    except Exception as e:
+        print(f"  Warning: bestSectors computation failed: {e}")
+        result["bestSectors"] = None
 
     for driver_code in drivers:
         driver_laps = laps.pick_drivers(driver_code)
@@ -309,6 +404,36 @@ def save_data(data, filename):
     return filepath
 
 
+def enrich_with_best_sectors():
+    """Add bestSectors to existing JSON.gz files without re-downloading telemetry."""
+    files = sorted(OUTPUT_DIR.glob("*.json.gz"))
+    if not files:
+        print("No JSON.gz files found in output directory")
+        return
+    for f in files:
+        with gzip.open(f, "rt", encoding="utf-8") as fh:
+            data = json.load(fh)
+        year, gp, st = data.get("year"), data.get("gp"), data.get("session")
+        print(f"Enriching {f.name} ({year} {gp} {st})...")
+        try:
+            session = fastf1.get_session(year, gp, st)
+            session.load(telemetry=False, laps=True, weather=False)
+        except Exception as e:
+            print(f"  Error loading session: {e}")
+            continue
+        try:
+            data["bestSectors"] = compute_best_sectors(session, st)
+        except Exception as e:
+            print(f"  Warning: bestSectors failed: {e}")
+            data["bestSectors"] = None
+        n = len(data["bestSectors"]["drivers"]) if data["bestSectors"] else 0
+        print(f"  bestSectors: {n} drivers")
+        with gzip.open(f, "wt", encoding="utf-8") as fh:
+            json.dump(data, fh, ensure_ascii=False, separators=(",", ":"))
+        size_kb = f.stat().st_size / 1024
+        print(f"  Saved: {f} ({size_kb:.1f} KB gzipped)")
+
+
 def build_index():
     """Build index.json from existing JSON/gzip files in the telemetry directory."""
     files = list(OUTPUT_DIR.glob("*.json.gz")) + list(OUTPUT_DIR.glob("*.json"))
@@ -353,10 +478,16 @@ def main():
     parser.add_argument("--list-gps", action="store_true", help="List available GPs")
     parser.add_argument("--list-sessions", action="store_true", help="List available sessions for a GP")
     parser.add_argument("--fetch-all", action="store_true", help="Fetch all available data for a GP")
+    parser.add_argument("--add-best-sectors", action="store_true", help="Add bestSectors to existing JSON.gz files (no telemetry download)")
     parser.add_argument("--build-index", action="store_true", help="Build index.json from cached data")
     args = parser.parse_args()
 
     if args.build_index:
+        build_index()
+        return
+
+    if args.add_best_sectors:
+        enrich_with_best_sectors()
         build_index()
         return
 

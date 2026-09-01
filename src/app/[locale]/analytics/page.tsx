@@ -69,15 +69,15 @@ export default async function AnalyticsPage({
 
       {/* Telemetry Compare CTA */}
       <div className="mb-8 rounded-2xl bg-navy p-8 text-center">
-        <p className="mb-3 text-lg font-bold text-white"> مقایسه تله‌متری رانندگان</p>
+        <p className="mb-3 text-lg font-bold text-white"> بهترین سکتورهای رانندگان</p>
         <p className="mb-4 text-sm text-white/60">
-          داده‌های تله‌متری لحظه‌ای (سرعت، گاز، ترمز، دنده، RPM) رو بین رانندگان مقایسه کنید
+          بهترین سکتورها و دور ایده‌آل هر راننده رو در هر سشن ببینید و مقایسه کنید
         </p>
         <Link
           href="/analytics/telemetry"
           className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-navy transition-transform hover:scale-105 hover:bg-primary-hover"
         >
-          🏎️ شروع مقایسه
+          🏎️ مشاهده سکتورها
         </Link>
       </div>
 
