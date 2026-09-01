@@ -84,13 +84,14 @@ function Headshot({
 interface Column {
   key: string;
   header: string;
+  farsi: string;
 }
 
 const SECTOR_COLUMNS: Column[] = [
-  { key: "Sector1", header: "Sector 1" },
-  { key: "Sector2", header: "Sector 2" },
-  { key: "Sector3", header: "Sector 3" },
-  { key: "Ideal", header: "Ideal" },
+  { key: "Sector1", header: "Sector 1", farsi: "سکتور ۱" },
+  { key: "Sector2", header: "Sector 2", farsi: "سکتور ۲" },
+  { key: "Sector3", header: "Sector 3", farsi: "سکتور ۳" },
+  { key: "Ideal", header: "Ideal", farsi: "ایده‌آل" },
 ];
 
 // ──────── One table panel ────────
@@ -98,11 +99,14 @@ function SectorTable({
   drivers,
   col,
   variant,
+  locale,
 }: {
   drivers: BestSectorsDriver[];
   col: Column;
   variant: "single" | "overall";
+  locale?: string;
 }) {
+  const isFa = locale === "fa";
   const sorted = useMemo(
     () =>
       [...drivers]
@@ -124,12 +128,12 @@ function SectorTable({
       <table className="w-full border-collapse text-xs">
         <thead>
           <tr className="bg-white/10">
-            <th className="px-2 py-2 text-start text-[10px] font-black text-primary">Driver</th>
-            <th className="px-2 py-2 text-center text-[10px] font-black text-primary">{col.header}</th>
+            <th className="px-2 py-2 text-start text-[10px] font-black text-primary font-en">Driver</th>
+            <th className="px-2 py-2 text-center text-[10px] font-black text-primary font-en">{isFa ? col.farsi : col.header}</th>
             {variant === "overall" && (
               <>
-                <th className="px-1.5 py-2 text-center text-[10px] font-black text-primary">Fastest</th>
-                <th className="px-1.5 py-2 text-center text-[10px] font-black text-primary">Delta Ideal</th>
+                <th className="px-1.5 py-2 text-center text-[10px] font-black text-primary font-en">Fastest</th>
+                <th className="px-1.5 py-2 text-center text-[10px] font-black text-primary font-en">Delta Ideal</th>
               </>
             )}
           </tr>
@@ -150,7 +154,7 @@ function SectorTable({
                   <div className="flex items-center gap-1.5">
                     <div className="h-full w-1 shrink-0 self-stretch py-2" style={{ backgroundColor: d.color, minHeight: 30 }} />
                     <Headshot src={d.headshot} code={d.code} color={d.color} size={22} />
-                    <span className="pe-2 text-[11px] font-bold text-white">{d.lastName}</span>
+                    <span className="pe-2 text-[11px] font-bold text-white font-en">{d.lastName}</span>
                   </div>
                 </td>
                 <td
@@ -187,12 +191,15 @@ function DeltaBarPanel({
   col,
   fastestDriver,
   fastestTime,
+  locale,
 }: {
   drivers: BestSectorsDriver[];
   col: Column;
   fastestDriver: string;
   fastestTime: string;
+  locale?: string;
 }) {
+  const isFa = locale === "fa";
   const rows = useMemo(() => {
     const vals = drivers
       .filter((d) => (d as any)[col.key] != null)
@@ -213,7 +220,7 @@ function DeltaBarPanel({
   return (
     <div className="rounded-xl bg-white/[0.04] p-3 ring-1 ring-white/10">
       <div className="mb-2 text-center">
-        <div className="text-xs font-black text-primary">{col.header === "Ideal" ? "Ideal Lap" : col.header}</div>
+        <div className="text-xs font-black text-primary font-en">{col.header === "Ideal" ? "Ideal Lap" : (isFa ? col.farsi : col.header)}</div>
         <div className="font-en text-[10px] text-white/60">({fastestDriver}) {fastestTime}</div>
       </div>
       <div className="space-y-1">
@@ -306,9 +313,9 @@ export default function BestSectors({ bestSectors, gp, session, locale }: BestSe
       {/* Output 1: tables — 2 cols mobile, 4 cols desktop */}
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {SECTOR_COLUMNS.slice(0, 3).map((col) => (
-          <SectorTable key={col.key} drivers={drivers} col={col} variant="single" />
+          <SectorTable key={col.key} drivers={drivers} col={col} variant="single" locale={locale} />
         ))}
-        <SectorTable drivers={drivers} col={SECTOR_COLUMNS[3]} variant="overall" />
+        <SectorTable drivers={drivers} col={SECTOR_COLUMNS[3]} variant="overall" locale={locale} />
       </div>
 
       {/* Output 2: delta bar charts */}
@@ -326,6 +333,7 @@ export default function BestSectors({ bestSectors, gp, session, locale }: BestSe
             col={col}
             fastestDriver={driver}
             fastestTime={time}
+            locale={locale}
           />
         ))}
       </div>
