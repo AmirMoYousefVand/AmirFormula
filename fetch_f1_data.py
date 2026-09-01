@@ -68,24 +68,25 @@ fastf1.Cache.enable_cache(str(CACHE_DIR))
 OUTPUT_DIR = Path(__file__).parent / "public" / "data" / "telemetry"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# 2025-2026 Team Colors (F1 official broadcast palette, synced with fastf1/plotting/constants.json)
-TEAM_COLORS = {
-    "McLaren": "#FF8000",
-    "Ferrari": "#E80020",
-    "Red Bull Racing": "#3671C6",
-    "Mercedes": "#27F4D2",
-    "Aston Martin": "#229971",
-    "Alpine": "#0093CC",
-    "Williams": "#64C4FF",
-    "Haas F1 Team": "#B6BABD",
-    "RB": "#6692FF",
-    "Kick Sauber": "#52E252",
-    # 2026 names
-    "Red Bull": "#3671C6",
-    "Cadillac": "#444444",
-    "Audi": "#FF2D00",
-    "Racing Bulls": "#6692FF",
-}
+# Load official FastF1 palette from constants.json (fastf1 colormap)
+_FASTF1_CONSTANTS_PATH = Path(fastf1.__file__).parent / "plotting" / "constants.json"
+_FASTF1_COLOR_MAP: dict = {}  # {year: {team_normalized: hex_color}}
+
+def _load_fastf1_colors():
+    """Load fastf1 palette colors from FastF1 constants.json."""
+    global _FASTF1_COLOR_MAP
+    if _FASTF1_COLOR_MAP:
+        return
+    try:
+        with open(_FASTF1_CONSTANTS_PATH, "r") as f:
+            data = json.load(f)
+        for year, year_data in data.items():
+            teams = year_data.get("teams", {})
+            _FASTF1_COLOR_MAP[year] = {}
+            for team_id, info in teams.items():
+                _FASTF1_COLOR_MAP[year][team_id] = info["colors"]["fastf1"]
+    except Exception as e:
+        print(f"  Warning: Could not load FastF1 constants: {e}")
 
 # 2025-2026 Driver Grid
 DRIVER_GRID = {
@@ -117,10 +118,49 @@ DRIVER_GRID = {
 }
 
 
-def get_team_color(team_name):
-    """Get official F1 team color."""
+def get_team_color(team_name, year=None):
+    """Get FastF1 palette color for a team (dynamically from constants.json)."""
+    _load_fastf1_colors()
+
+    # Fallback if constants not loaded
+    TEAM_COLORS = {
+        "McLaren": "#FF8000", "Ferrari": "#E80020",
+        "Red Bull Racing": "#0600EF", "Red Bull": "#0600EF",
+        "Mercedes": "#27F4D2", "Aston Martin": "#00665F",
+        "Alpine": "#FF87BC", "Williams": "#00A0DD",
+        "Haas F1 Team": "#B6BABD", "RB": "#FCD700",
+        "Kick Sauber": "#00E700", "Cadillac": "#444444",
+        "Audi": "#FF2D00", "Racing Bulls": "#FCD700",
+    }
+
+    # Normalize team name to match constants.json keys
+    team_lower = team_name.lower().strip()
+    alias_map = {
+        "red bull racing": "red bull",
+        "rb": "racing bulls",
+        "kick sauber": "kick sauber",
+        "haas f1 team": "haas",
+        "racing bulls": "racing bulls",
+        "alpine": "alpine",
+        "aston martin": "aston martin",
+        "cadillac": "cadillac",
+        "audi": "audi",
+        "ferrari": "ferrari",
+        "mclaren": "mclaren",
+        "mercedes": "mercedes",
+        "williams": "williams",
+    }
+    normalized = alias_map.get(team_lower, team_lower)
+
+    # Try each available year (most recent first)
+    for yr in sorted(_FASTF1_COLOR_MAP.keys(), reverse=True):
+        colors = _FASTF1_COLOR_MAP[yr]
+        if normalized in colors:
+            return colors[normalized]
+
+    # Fallback to TEAM_COLORS hardcoded
     for key, color in TEAM_COLORS.items():
-        if key.lower() in team_name.lower() or team_name.lower() in key.lower():
+        if key.lower() in team_lower or team_lower in key.lower():
             return color
     return "#888888"
 
