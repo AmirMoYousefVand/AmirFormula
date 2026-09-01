@@ -26,6 +26,7 @@ interface BestSectorsProps {
   bestSectors: BestSectorsData | null | undefined;
   gp: string;
   session: string;
+  locale?: string;
 }
 
 // ──────── Helpers (match Python format_time / format_delta) ────────
@@ -70,9 +71,7 @@ function Headshot({
     <img
       src={src}
       alt={code}
-      width={size}
-      height={size}
-      className="shrink-0 object-contain object-bottom"
+      className="shrink-0 rounded-full object-cover"
       style={{ width: size, height: size }}
       onError={(e) => {
         e.currentTarget.style.display = "none";
@@ -104,38 +103,33 @@ function SectorTable({
   col: Column;
   variant: "single" | "overall";
 }) {
-  // Sort by the column value ascending (matches Python sort_values)
   const sorted = useMemo(
     () =>
       [...drivers]
         .filter((d) => (d as any)[col.key] != null)
         .sort((a, b) => (a as any)[col.key] - (b as any)[col.key]),
-    [drivers, col.key]
+    [drivers, col.key],
   );
   const fastestVal = sorted.length > 0 ? (sorted[0] as any)[col.key] : null;
 
   const fastLapFastest =
     variant === "overall"
       ? Math.min(
-          ...drivers.map((d) => d.FastestLap ?? Infinity).filter((v) => isFinite(v))
+          ...drivers.map((d) => d.FastestLap ?? Infinity).filter((v) => isFinite(v)),
         )
       : null;
 
   return (
     <div className="overflow-hidden rounded-xl ring-1 ring-white/10">
-      <table className="w-full border-collapse text-sm">
+      <table className="w-full border-collapse text-xs">
         <thead>
           <tr className="bg-white/10">
-            <th className="px-3 py-2.5 text-start text-xs font-black text-primary">
-              Driver
-            </th>
-            <th className="px-3 py-2.5 text-center text-xs font-black text-primary">
-              {col.header}
-            </th>
+            <th className="px-2 py-2 text-start text-[10px] font-black text-primary">Driver</th>
+            <th className="px-2 py-2 text-center text-[10px] font-black text-primary">{col.header}</th>
             {variant === "overall" && (
               <>
-                <th className="px-2 py-2.5 text-center text-xs font-black text-primary">Fastest</th>
-                <th className="px-2 py-2.5 text-center text-xs font-black text-primary">Delta Ideal</th>
+                <th className="px-1.5 py-2 text-center text-[10px] font-black text-primary">Fastest</th>
+                <th className="px-1.5 py-2 text-center text-[10px] font-black text-primary">Delta Ideal</th>
               </>
             )}
           </tr>
@@ -152,18 +146,15 @@ function SectorTable({
             const zebra = idx % 2 === 0 ? "bg-white/[0.03]" : "bg-white/[0.07]";
             return (
               <tr key={`${d.code}-${idx}`} className={zebra}>
-                <td className="px-0 py-0">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="h-full w-1.5 self-stretch py-2.5"
-                      style={{ backgroundColor: d.color, minHeight: 36 }}
-                    />
-                    <Headshot src={d.headshot} code={d.code} color={d.color} size={26} />
-                    <span className="pe-3 text-xs font-bold text-white">{d.lastName}</span>
+                <td className="w-0 whitespace-nowrap px-0 py-0">
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-full w-1 shrink-0 self-stretch py-2" style={{ backgroundColor: d.color, minHeight: 30 }} />
+                    <Headshot src={d.headshot} code={d.code} color={d.color} size={22} />
+                    <span className="pe-2 text-[11px] font-bold text-white">{d.lastName}</span>
                   </div>
                 </td>
                 <td
-                  className="px-3 py-2.5 text-center font-en text-xs font-bold"
+                  className="px-2 py-2 text-center font-en text-[11px] font-bold"
                   style={{ color: isFastest || isFastestLapCol ? FASTEST_COLOR : "#FFFFFF" }}
                 >
                   {fmtTime((d as any)[col.key])}
@@ -171,12 +162,12 @@ function SectorTable({
                 {variant === "overall" && (
                   <>
                     <td
-                      className="px-2 py-2.5 text-center font-en text-xs font-bold"
+                      className="px-1.5 py-2 text-center font-en text-[11px] font-bold"
                       style={{ color: isFastestLapCol ? FASTEST_COLOR : "#FFFFFF" }}
                     >
                       {fmtTime(d.FastestLap)}
                     </td>
-                    <td className="px-2 py-2.5 text-center font-en text-xs text-white/80">
+                    <td className="px-1.5 py-2 text-center font-en text-[11px] text-white/80">
                       {fmtDelta(d.DeltaToIdeal)}
                     </td>
                   </>
@@ -202,7 +193,6 @@ function DeltaBarPanel({
   fastestDriver: string;
   fastestTime: string;
 }) {
-  // Deltas to fastest (matches Python Delta_X = value - fastest)
   const rows = useMemo(() => {
     const vals = drivers
       .filter((d) => (d as any)[col.key] != null)
@@ -215,37 +205,34 @@ function DeltaBarPanel({
 
   if (rows.length === 0) return null;
 
-  // set_safe_xlim: right = max + 12% + 0.15 (matches Python)
   const maxDelta = rows[rows.length - 1].delta;
   const xMax = maxDelta + 0.12 * maxDelta + 0.15;
-
-  // get_label_pos: margin 6% of range, pad 1.2% (matches Python)
   const margin = 0.06 * xMax;
   const pad = 0.012 * xMax;
 
   return (
-    <div className="rounded-xl bg-white/[0.04] p-4 ring-1 ring-white/10">
-      <div className="mb-3 text-center">
-        <div className="text-sm font-black text-primary">{col.header === "Ideal" ? "Ideal Lap" : col.header}</div>
-        <div className="font-en text-[11px] text-white/60">
-          ({fastestDriver}) {fastestTime}
-        </div>
+    <div className="rounded-xl bg-white/[0.04] p-3 ring-1 ring-white/10">
+      <div className="mb-2 text-center">
+        <div className="text-xs font-black text-primary">{col.header === "Ideal" ? "Ideal Lap" : col.header}</div>
+        <div className="font-en text-[10px] text-white/60">({fastestDriver}) {fastestTime}</div>
       </div>
-      <div className="space-y-[5px]">
+      <div className="space-y-1">
         {rows.map(({ driver, delta }) => {
           const barPct = (delta / xMax) * 100;
           const labelAt = delta + pad;
           const labelPct = (labelAt / xMax) * 100;
           const labelEnd = labelAt >= xMax - margin;
           return (
-            <div key={driver.code} className="relative flex h-7 items-center">
+            <div key={driver.code} dir="ltr" className="relative flex h-6 items-center text-left">
               {/* driver abbr + headshot on the left */}
-              <div className="absolute -start-1 z-10 flex -translate-x-full items-center gap-1">
-                <Headshot src={driver.headshot} code={driver.code} color={driver.color} size={22} />
-                <span className="font-en text-[11px] font-bold text-white">{driver.code}</span>
+              <div className="absolute start-0 z-10 flex -translate-x-full items-center gap-0.5 pe-1">
+                <span className="font-en text-[10px] font-bold text-white">{driver.code}</span>
+                <div className="overflow-hidden rounded-full">
+                  <Headshot src={driver.headshot} code={driver.code} color={driver.color} size={20} />
+                </div>
               </div>
               {/* bar track */}
-              <div className="relative h-full w-full">
+              <div className="relative h-full w-full overflow-hidden">
                 <div
                   className="absolute inset-y-0 start-0 rounded-e-sm"
                   style={{
@@ -259,7 +246,7 @@ function DeltaBarPanel({
                   className="font-en absolute top-1/2 -translate-y-1/2 text-[10px] font-bold text-white"
                   style={
                     labelEnd
-                      ? { right: `${100 - (xMax - margin) / xMax * 100}%` }
+                      ? { right: `${100 - ((xMax - margin) / xMax) * 100}%` }
                       : { left: `${labelPct}%` }
                   }
                 >
@@ -270,7 +257,7 @@ function DeltaBarPanel({
           );
         })}
       </div>
-      <div className="mt-2 border-t border-white/10 pt-1.5 text-center font-en text-[10px] text-white/40">
+      <div className="mt-1.5 border-t border-white/10 pt-1 text-center font-en text-[9px] text-white/40">
         Delta to Fastest (s)
       </div>
     </div>
@@ -278,55 +265,46 @@ function DeltaBarPanel({
 }
 
 // ──────── Main ────────
-export default function BestSectors({ bestSectors, gp, session }: BestSectorsProps) {
+export default function BestSectors({ bestSectors, gp, session, locale }: BestSectorsProps) {
   if (!bestSectors || !bestSectors.drivers?.length) {
     return (
       <div className="rounded-2xl bg-white p-16 text-center ring-1 ring-silver/30">
         <Trophy className="mx-auto mb-4 h-16 w-16 text-silver/30" />
-        <h3 className="mb-2 text-lg font-bold text-navy">داده سکتورها موجود نیست</h3>
+        <h3 className="mb-2 text-lg font-bold text-navy">No sector data available</h3>
         <p className="mx-auto max-w-md text-sm text-body">
-          برای این سشن داده bestSectors تولید نشده. با دستور زیر فایل‌های موجود رو غنی کنید:
+          Run <code className="rounded bg-navy/10 px-1 py-0.5 font-en text-xs">python fetch_f1_data.py --add-best-sectors</code> to enrich existing data.
         </p>
-        <code className="mt-3 inline-block rounded-lg bg-navy px-4 py-2 font-en text-xs text-white" dir="ltr">
-          python fetch_f1_data.py --add-best-sectors
-        </code>
       </div>
     );
   }
 
   const drivers = bestSectors.drivers;
+  const isFa = locale === "fa";
 
-  // Fastest per column for chart headers
   const fastestInfo = SECTOR_COLUMNS.map((col) => {
     const valid = drivers.filter((d) => (d as any)[col.key] != null);
     const fastest = valid.reduce(
       (best, d) => ((d as any)[col.key] < (best as any)[col.key] ? d : best),
-      valid[0]
+      valid[0],
     );
-    return {
-      col,
-      driver: fastest?.code || "-",
-      time: fmtTime((fastest as any)?.[col.key]),
-    };
+    return { col, driver: fastest?.code || "-", time: fmtTime((fastest as any)?.[col.key]) };
   });
 
   return (
     <div className="space-y-4 rounded-2xl bg-navy p-4 md:p-6">
-      {/* Header bar — like apply_modern_header_footer */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/5 px-5 py-4">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/5 px-5 py-3">
         <div className="flex items-center gap-2">
           <Trophy className="h-5 w-5 text-primary" />
-          <h2 className="text-base font-black text-white md:text-lg">
-            بهترین سکتورها و دور ایده‌آل رانندگان
+          <h2 className="text-sm font-black text-white md:text-base">
+            {isFa ? "بهترین سکتورها و دور ایده‌آل رانندگان" : "Best Sectors & Ideal Lap"}
           </h2>
         </div>
-        <span className="font-en text-xs text-white/50">
-          {gp} · {session}
-        </span>
+        <span className="font-en text-xs text-white/50">{gp} · {session}</span>
       </div>
 
-      {/* Output 1: tables */}
-      <div className="grid gap-4 xl:grid-cols-4 md:grid-cols-2">
+      {/* Output 1: tables — 2 cols mobile, 4 cols desktop */}
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {SECTOR_COLUMNS.slice(0, 3).map((col) => (
           <SectorTable key={col.key} drivers={drivers} col={col} variant="single" />
         ))}
@@ -336,9 +314,11 @@ export default function BestSectors({ bestSectors, gp, session }: BestSectorsPro
       {/* Output 2: delta bar charts */}
       <div className="flex items-center gap-2 pt-2">
         <BarChart3 className="h-4 w-4 text-primary" />
-        <h3 className="text-sm font-black text-white">دلتا تا سریع‌ترین</h3>
+        <h3 className="text-sm font-black text-white">
+          {isFa ? "دلتا تا سریع‌ترین" : "Delta to Fastest"}
+        </h3>
       </div>
-      <div className="grid gap-4 xl:grid-cols-4 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {fastestInfo.map(({ col, driver, time }) => (
           <DeltaBarPanel
             key={col.key}
