@@ -223,16 +223,16 @@ function DeltaBarPanel({
           const labelPct = (labelAt / xMax) * 100;
           const labelEnd = labelAt >= xMax - margin;
           return (
-            <div key={driver.code} dir="ltr" className="relative flex h-6 items-center text-left">
-              {/* driver abbr + headshot on the left */}
-              <div className="absolute start-0 z-10 flex -translate-x-full items-center gap-0.5 pe-1">
+            <div key={driver.code} dir="ltr" className="flex h-6 items-center text-left">
+              {/* driver info: fixed width left section */}
+              <div className="flex w-[52px] shrink-0 items-center gap-1">
                 <span className="font-en text-[10px] font-bold text-white">{driver.code}</span>
                 <div className="overflow-hidden rounded-full">
-                  <Headshot src={driver.headshot} code={driver.code} color={driver.color} size={20} />
+                  <Headshot src={driver.headshot} code={driver.code} color={driver.color} size={18} />
                 </div>
               </div>
               {/* bar track */}
-              <div className="relative h-full w-full overflow-hidden">
+              <div className="relative h-full min-w-0 flex-1 overflow-hidden">
                 <div
                   className="absolute inset-y-0 start-0 rounded-e-sm"
                   style={{

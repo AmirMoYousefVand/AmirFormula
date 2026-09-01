@@ -148,30 +148,27 @@ export default function BestSectorsView() {
       {/* Selector */}
       <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-silver/30">
         <div className="flex flex-wrap items-end gap-4">
-          {/* Year */}
+          {/* Year dropdown */}
           <div>
             <label className="mb-1 block text-xs font-bold text-navy">Year</label>
-            <div className="flex gap-1">
-              {availableYears.map((y) => (
-                <button key={y} onClick={() => { setSelectedYear(y); setSelectedGP(""); }}
-                  className={`rounded-lg px-3 py-2 text-xs font-bold font-en transition-colors ${selectedYear === y ? "bg-navy text-white" : "bg-silver/15 text-body hover:bg-silver/30"}`}>
-                  {y}
-                </button>
-              ))}
-            </div>
+            <select value={selectedYear} onChange={(e) => { setSelectedYear(Number(e.target.value)); setSelectedGP(""); }}
+              className="rounded-lg border border-silver/50 bg-white px-4 py-2.5 text-sm text-navy outline-none focus:border-primary font-en">
+              <option value="">{locale === "fa" ? "انتخاب سال" : "Select year"}</option>
+              {availableYears.map((y) => <option key={y} value={y}>{y}</option>)}
+            </select>
           </div>
 
-          {/* GP */}
+          {/* GP dropdown */}
           <div className="flex-1 min-w-[220px]">
             <label className="mb-1 block text-xs font-bold text-navy">Grand Prix</label>
             <select value={selectedGP} onChange={(e) => setSelectedGP(e.target.value)} disabled={!availableGPs.length}
-              className="w-full rounded-lg border border-silver/50 bg-white px-4 py-2.5 text-sm text-navy outline-none focus:border-primary disabled:cursor-not-allowed disabled:bg-silver/5">
+              className="w-full rounded-lg border border-silver/50 bg-white px-4 py-2.5 text-sm text-navy outline-none focus:border-primary disabled:cursor-not-allowed disabled:bg-silver/5 font-en">
               <option value="">{!selectedYear ? (locale === "fa" ? "ابتدا سال را انتخاب کنید" : "Select year first") : (locale === "fa" ? "انتخاب GP" : "Select GP")}</option>
               {availableGPs.map((g) => <option key={`${g.year}_${g.gp}`} value={g.gp}>{g.gp}</option>)}
             </select>
           </div>
 
-          {/* Session */}
+          {/* Session buttons */}
           <div>
             <label className="mb-1 block text-xs font-bold text-navy">Session</label>
             <div className="flex gap-1">
@@ -179,7 +176,7 @@ export default function BestSectorsView() {
                 const ok = availableSessions.includes(s);
                 return (
                   <button key={s} onClick={() => ok && setSelectedSession(s)} disabled={!ok}
-                    className={`rounded-lg px-3 py-2 text-xs font-bold transition-colors ${selectedSession === s ? "bg-navy text-white" : ok ? "bg-silver/15 text-body hover:bg-silver/30" : "bg-silver/5 text-silver/50 cursor-not-allowed"}`}>
+                    className={`rounded-lg px-3 py-2 text-xs font-bold font-en transition-colors ${selectedSession === s ? "bg-navy text-white" : ok ? "bg-silver/15 text-body hover:bg-silver/30" : "bg-silver/5 text-silver/50 cursor-not-allowed"}`}>
                     {s}
                   </button>
                 );
