@@ -12,3 +12,4 @@ next-env.d.ts
 *.tmp
 Thumbs.db
 .f1cache/
+__pycache__/
