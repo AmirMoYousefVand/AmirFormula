@@ -275,17 +275,18 @@ def get_session_schedule(year):
 
 def fetch_session_data(year, gp_name, session_type):
     """Fetch lap data and telemetry for a session."""
-    print(f"Fetching {year} {gp_name} {session_type}...")
-
+    session = None
     try:
         session = fastf1.get_session(year, gp_name, session_type)
+    except Exception:
+        return None  # Session type doesn't exist (e.g. SQ not all events)
+
+    try:
         session.load(telemetry=True, laps=True, weather=False)
-    except Exception as e:
-        print(f"Warning: Session load with telemetry failed, trying without: {e}")
+    except Exception:
         try:
             session.load(telemetry=False, laps=True, weather=False)
-        except Exception as e2:
-            print(f"Error loading session: {e2}")
+        except Exception:
             return None
 
     try:
@@ -311,11 +312,18 @@ def fetch_session_data(year, gp_name, session_type):
         "corners": [],
     }
 
-    # Get circuit corners and rotation
+    # Get circuit corners and rotation (non-blocking — skip if network fails)
     try:
         import requests
         import urllib3
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+        # Patch requests session with User-Agent and short timeout
+        old_send = requests.adapters.HTTPAdapter.send
+        def _patched_send(self, *args, **kwargs):
+            kwargs.setdefault("timeout", 8)
+            return old_send(self, *args, **kwargs)
+        requests.adapters.HTTPAdapter.send = _patched_send
 
         circuit_info = session.get_circuit_info()
         if circuit_info is not None and hasattr(circuit_info, 'corners'):
@@ -328,8 +336,11 @@ def fetch_session_data(year, gp_name, session_type):
                     "angle": float(corner.get("Angle", 0)),
                 })
         result["trackRotation"] = float(circuit_info.rotation) if hasattr(circuit_info, 'rotation') else 0
+
+        # Restore original send
+        requests.adapters.HTTPAdapter.send = old_send
     except Exception as e:
-        print(f"  Warning: Could not get circuit info (Network issue?): {e}")
+        print(f"  Warning: Circuit info skipped (non-critical): {type(e).__name__}")
         result["trackRotation"] = 0
 
     try:
@@ -413,8 +424,8 @@ def fetch_session_data(year, gp_name, session_type):
                         "y": sampled["Y"].round(1).tolist() if "Y" in sampled.columns else [],
                         "time": sampled["Time"].dt.total_seconds().round(4).tolist() if "Time" in sampled.columns else [],
                     }
-            except Exception as e:
-                print(f"  Warning: Could not get telemetry for {driver_code} L{lap['LapNumber']}: {e}")
+            except Exception:
+                pass  # Telemetry not available for this lap (common in Q/SQ)
 
             result["laps"].append(lap_data)
 
@@ -444,34 +455,43 @@ def save_data(data, filename):
     return filepath
 
 
-def enrich_with_best_sectors():
-    """Add bestSectors to existing JSON.gz files without re-downloading telemetry."""
+def enrich_with_best_sectors(callback=None):
+    """Add bestSectors to existing JSON.gz files without re-downloading telemetry.
+
+    Args:
+        callback: Optional fn(step, total, filename) for progress reporting.
+    """
     files = sorted(OUTPUT_DIR.glob("*.json.gz"))
     if not files:
         print("No JSON.gz files found in output directory")
         return
-    for f in files:
+
+    total = len(files)
+    for i, f in enumerate(files):
+        if callback:
+            callback(i, total, f.name)
         with gzip.open(f, "rt", encoding="utf-8") as fh:
             data = json.load(fh)
         year, gp, st = data.get("year"), data.get("gp"), data.get("session")
-        print(f"Enriching {f.name} ({year} {gp} {st})...")
         try:
             session = fastf1.get_session(year, gp, st)
             session.load(telemetry=False, laps=True, weather=False)
-        except Exception as e:
-            print(f"  Error loading session: {e}")
-            continue
-        try:
-            data["bestSectors"] = compute_best_sectors(session, st)
-        except Exception as e:
-            print(f"  Warning: bestSectors failed: {e}")
+        except Exception:
             data["bestSectors"] = None
-        n = len(data["bestSectors"]["drivers"]) if data["bestSectors"] else 0
-        print(f"  bestSectors: {n} drivers")
+        else:
+            try:
+                data["bestSectors"] = compute_best_sectors(session, st)
+            except Exception:
+                data["bestSectors"] = None
+        # Update driver colors with FastF1 palette
+        if "drivers" in data:
+            for d in data["drivers"]:
+                d["color"] = get_team_color(d.get("team", ""))
+        if data.get("bestSectors") and "drivers" in data["bestSectors"]:
+            for d in data["bestSectors"]["drivers"]:
+                d["color"] = get_team_color(d.get("team", ""))
         with gzip.open(f, "wt", encoding="utf-8") as fh:
             json.dump(data, fh, ensure_ascii=False, separators=(",", ":"))
-        size_kb = f.stat().st_size / 1024
-        print(f"  Saved: {f} ({size_kb:.1f} KB gzipped)")
 
 
 def build_index():
