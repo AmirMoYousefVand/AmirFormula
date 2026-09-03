@@ -7,10 +7,11 @@ export default function MarkdownRenderer({ content }: { content: string }) {
   const cleanContent = content
     // Remove zero-width spaces and other invisible RTL characters that break markdown parsing
     .replace(/[​-‍﻿]/g, "")
-    // Ensure headings have a space after the hashes (e.g. ##Heading -> ## Heading)
-    .replace(/^(#{1,6})([^#\s])/gm, "$1 $2")
-    // Ensure headings have a blank line before them
-    .replace(/([^\n])\n(#{1,6}\s)/g, "$1\n\n$2");
+    // Ensure headings have an exact ASCII space after the hashes
+    // Handles missing space, regular space, NBSP (\xA0), and Persian half-space (‌ ZWNJ)
+    .replace(/^([ \t]*)(#{1,6})[ \t\xA0‌]*([^#\s].*)$/gm, "$1$2 $3")
+    // Ensure headings have a blank line before them (handling \r\n properly)
+    .replace(/([^\r\n])\r?\n([ \t]*#{1,6}\s)/g, "$1\n\n$2");
 
   return (
     <div className="markdown-body">
