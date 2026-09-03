@@ -141,6 +141,19 @@ export async function getMostReadPosts(limit = 3) {
   return attachTags(posts || [], tagMap);
 }
 
+export async function getMostLikedPosts(limit = 3) {
+  const supabase = await createClient();
+  const { data: posts } = await supabase
+    .from("posts")
+    .select("*")
+    .or(PUBLIC_POST_FILTER)
+    .order("like_count", { ascending: false })
+    .limit(limit);
+
+  const tagMap = await getTagsForPosts((posts || []).map((p) => p.id));
+  return attachTags(posts || [], tagMap);
+}
+
 export async function getAllTags() {
   const supabase = await createClient();
   const { data } = await supabase

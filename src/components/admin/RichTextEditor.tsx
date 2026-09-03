@@ -1,8 +1,8 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, ReactNodeViewRenderer } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Image from "@tiptap/extension-image";
+import TiptapImage from "@tiptap/extension-image";
 import TextAlign from "@tiptap/extension-text-align";
 import { Markdown } from "tiptap-markdown";
 import {
@@ -25,6 +25,21 @@ import {
 import { uploadImageToSupabase } from "@/lib/supabase/storage";
 import { useRef, useState } from "react";
 import MediaGallery from "./MediaGallery";
+import ImageFigure from "./ImageFigure";
+
+// Extend built-in Image with title attribute + node view for inline caption editing
+const ImageWithCaption = TiptapImage.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      title: { default: "" },
+    };
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(ImageFigure);
+  },
+});
 
 interface RichTextEditorProps {
   value: string;
@@ -44,7 +59,7 @@ export default function RichTextEditor({
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Image,
+      ImageWithCaption,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Markdown,
     ],
@@ -57,7 +72,6 @@ export default function RichTextEditor({
       },
     },
     onUpdate: ({ editor }) => {
-      // Get markdown output, casting storage to any since tiptap-markdown doesn't fully extend it
       onChange((editor.storage as any).markdown.getMarkdown());
     },
   });
@@ -73,10 +87,7 @@ export default function RichTextEditor({
     }
 
     if (url && editor) {
-      const alt = prompt("متن جایگزین (Alt) تصویر را وارد کنید (اختیاری):");
-      const title = prompt("کپشن تصویر را وارد کنید (اختیاری):");
-
-      editor.chain().focus().setImage({ src: url, alt: alt || "", title: title || "" }).run();
+      editor.chain().focus().setImage({ src: url, alt: "", title: "" }).run();
     }
   };
 
@@ -248,9 +259,7 @@ export default function RichTextEditor({
       {galleryOpen && (
         <MediaGallery
           onSelect={(url) => {
-            const alt = prompt("متن جایگزین (Alt) تصویر را وارد کنید (اختیاری):");
-            const title = prompt("کپشن تصویر را وارد کنید (اختیاری):");
-            editor?.chain().focus().setImage({ src: url, alt: alt || "", title: title || "" }).run();
+            editor?.chain().focus().setImage({ src: url, alt: "", title: "" }).run();
             setGalleryOpen(false);
           }}
           onClose={() => setGalleryOpen(false)}

@@ -55,7 +55,7 @@ export default async function PostPage({
   const comments = await getApprovedComments(post.id);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12">
+    <div className="mx-auto max-w-7xl px-4 py-8">
       <ViewTracker slug={slug} />
 
       <Link
@@ -65,8 +65,8 @@ export default async function PostPage({
         → {t("backToBlog")}
       </Link>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 items-start">
-        <article className="lg:col-span-3">
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
+        <article className="flex-1 min-w-0 lg:max-w-[75%]">
           <header className="mb-8">
             <h1 className="mb-4 text-3xl font-black leading-tight text-navy md:text-4xl">
               {localizedTitle(post, locale)}
@@ -120,7 +120,7 @@ export default async function PostPage({
         </article>
 
         {/* Sidebar */}
-        <aside className="lg:col-span-1 lg:sticky lg:top-24">
+        <aside className="w-full lg:w-[25%] lg:sticky lg:top-20 flex-shrink-0">
           <BlogSidebar locale={locale} />
         </aside>
       </div>
