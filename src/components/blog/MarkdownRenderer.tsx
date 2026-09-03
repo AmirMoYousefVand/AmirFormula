@@ -11,10 +11,17 @@ export default function MarkdownRenderer({
 }) {
   let cleanContent = content;
 
-  // 1. Normalize line endings to standard \n
+  // 1. Separate headings that are stuck to the end of another element on the same line
+  // Example: `![alt](url)### Heading` -> `![alt](url)\n\n### Heading`
+  cleanContent = cleanContent.replace(/([^\n\s\xA0​‍﻿])[\s\xA0​‍﻿]*(#{1,6})(?=\s|[a-zA-Z0-9])/g, "$1\n\n$2");
+
+  // 2. Remove spaces and zero-width characters at the START of a line before a hash
+  cleanContent = cleanContent.replace(/^[\s\xA0​‍﻿]+(#{1,6})/gm, "$1");
+
+  // 3. Normalize line endings to standard \n
   cleanContent = cleanContent.replace(/\r\n/g, "\n");
 
-  // 2. Fix heading hashes first: ensure there is exactly one space after hashes
+  // 4. Fix heading hashes first: ensure there is exactly one space after hashes
   //    and strip leading invisible characters. This MUST run before the newline regex.
   cleanContent = cleanContent.replace(
     /^[ \t]*(#{1,6})(.*)$/gm,
@@ -26,12 +33,12 @@ export default function MarkdownRenderer({
     }
   );
 
-  // 3. Ensure headings have a blank line before them.
+  // 5. Ensure headings have a blank line before them.
   //    Matches any non-newline character, followed by exactly one newline,
   //    followed by a heading, and replaces the single newline with a double newline.
   cleanContent = cleanContent.replace(/([^\n])\n(#{1,6} )/g, "$1\n\n$2");
 
-  // 4. Ensure HTML blocks (like figures if serialized as HTML) are separated from text
+  // 6. Ensure HTML blocks (like figures if serialized as HTML) are separated from text
   cleanContent = cleanContent.replace(/(<\/figure>|<\/div>|<img[^>]*>)\n([^\n])/gi, "$1\n\n$2");
 
   return (
