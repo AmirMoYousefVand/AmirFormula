@@ -11,23 +11,28 @@ export default function MarkdownRenderer({
 }) {
   let cleanContent = content;
 
-  // 1. Fix heading hashes first: ensure there is a space after hashes and strip leading invisible characters.
-  //    This must run BEFORE the newline fix below, otherwise headings without spaces won't be recognized.
+  // 1. Normalize line endings to standard \n
+  cleanContent = cleanContent.replace(/\r\n/g, "\n");
+
+  // 2. Fix heading hashes first: ensure there is exactly one space after hashes
+  //    and strip leading invisible characters. This MUST run before the newline regex.
   cleanContent = cleanContent.replace(
-    /^(#{1,6})(.*)$/gm,
+    /^[ \t]*(#{1,6})(.*)$/gm,
     (_match, hashes, rest) => {
-      // Strip invisible chars that may surround the hashes (but preserve ZWNJ inside the text itself)
       const cleanRest = rest
-        .replace(/^[\s ​‌‍﻿]+/, "")  // leading invisible chars/spaces
-        .replace(/[​‍﻿]/g, "");           // remaining invisible chars EXCEPT ZWNJ (‌ / ‌)
+        .replace(/^[\s\xA0​‌‍﻿]+/, "") // Strip leading spaces/invisible chars
+        .replace(/[​‍﻿]/g, ""); // Strip invisibles EXCEPT ZWNJ (‌) in text
       return hashes + " " + cleanRest.trim();
     }
   );
 
-  // 2. Ensure headings have a blank line before them (handling \r\n properly).
-  //    If markdown from tiptap output puts a heading immediately after an image `![alt](url)\n### Heading`,
-  //    react-markdown considers it part of the same paragraph. This injects the required empty line.
-  cleanContent = cleanContent.replace(/([^\r\n])\r?\n([ \t]*#{1,6}\s)/g, "$1\n\n$2");
+  // 3. Ensure headings have a blank line before them.
+  //    Matches any non-newline character, followed by exactly one newline,
+  //    followed by a heading, and replaces the single newline with a double newline.
+  cleanContent = cleanContent.replace(/([^\n])\n(#{1,6} )/g, "$1\n\n$2");
+
+  // 4. Ensure HTML blocks (like figures if serialized as HTML) are separated from text
+  cleanContent = cleanContent.replace(/(<\/figure>|<\/div>|<img[^>]*>)\n([^\n])/gi, "$1\n\n$2");
 
   return (
     <div className="markdown-body">
