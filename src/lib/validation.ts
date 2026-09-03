@@ -16,18 +16,18 @@ export const likeSchema = z.object({
 export const postSchema = z
   .object({
     id: z.string().uuid().optional(),
-    slug: z.string().max(100).optional().or(z.literal("")),
+    slug: z.string().max(200).optional().or(z.literal("")),
     status: z.enum(["draft", "scheduled", "published"]),
-    title_fa: z.string().trim().max(200).optional().or(z.literal("")),
-    title_en: z.string().trim().max(200).optional().or(z.literal("")),
-    excerpt_fa: z.string().trim().max(300).optional().or(z.literal("")),
-    excerpt_en: z.string().trim().max(300).optional().or(z.literal("")),
+    title_fa: z.string().trim().max(300).optional().or(z.literal("")),
+    title_en: z.string().trim().max(300).optional().or(z.literal("")),
+    excerpt_fa: z.string().trim().max(600).optional().or(z.literal("")),
+    excerpt_en: z.string().trim().max(600).optional().or(z.literal("")),
     content_fa: z.string().optional().or(z.literal("")),
     content_en: z.string().optional().or(z.literal("")),
     cover_image_url: z.string().url().optional().or(z.literal("")),
     published_at: z.string().optional(),
-    meta_description: z.string().trim().max(300).optional().or(z.literal("")),
-    meta_keywords: z.string().trim().max(200).optional().or(z.literal("")),
+    meta_description: z.string().trim().max(600).optional().or(z.literal("")),
+    meta_keywords: z.string().trim().max(500).optional().or(z.literal("")),
     tag_ids: z.array(z.string().uuid()).default([]),
   })
   .refine(
