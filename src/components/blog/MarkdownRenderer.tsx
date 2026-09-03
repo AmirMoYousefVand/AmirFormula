@@ -13,12 +13,12 @@ export default function MarkdownRenderer({
 
   // 0. Remove Tiptap's markdown hard breaks (\ followed by newline)
   //    and any stray backslashes right before a heading
-  cleanContent = cleanContent.replace(/\\\n/g, "\n");
+  cleanContent = cleanContent.replace(/\\n/g, "\n");
 
   // 1. Separate headings that are stuck to the end of another element on the same line
   // Example: `![alt](url)### Heading` -> `![alt](url)\n\n### Heading`
   // We exclude `\` from $1 so we don't accidentally preserve a stray escape char
-  cleanContent = cleanContent.replace(/([^\n\s\xA0​‍﻿\\])[\s\xA0​‍﻿\\]*(#{1,6})(?=\s|[a-zA-Z0-9])/g, "$1\n\n$2");
+  cleanContent = cleanContent.replace(/([^\n\s\xA0​‍﻿\])[\s\xA0​‍﻿\]*(#{1,6})(?=\s|[a-zA-Z0-9])/g, "$1\n\n$2");
 
   // 2. Remove spaces and zero-width characters at the START of a line before a hash
   cleanContent = cleanContent.replace(/^[\s\xA0​‍﻿]+(#{1,6})/gm, "$1");
@@ -52,19 +52,29 @@ export default function MarkdownRenderer({
         remarkPlugins={[remarkGfm]}
         components={{
           img: ({ node, ...props }) => {
+            // Determine alt and title based on current locale
+            // We use data-attributes stored by our custom Tiptap extension
+            const altFa = (props as any)["data-alt-fa"] || props.alt || "";
+            const altEn = (props as any)["data-alt-en"] || "";
+            const titleFa = (props as any)["data-title-fa"] || props.title || "";
+            const titleEn = (props as any)["data-title-en"] || "";
+
+            const displayAlt = locale === "en" && altEn ? altEn : altFa;
+            const displayTitle = locale === "en" && titleEn ? titleEn : titleFa;
+
             return (
               <figure className="my-8 flex flex-col items-center">
                 <span className="block relative w-full aspect-video max-w-4xl rounded-xl overflow-hidden shadow-md">
                   <Image
                     src={typeof props.src === "string" ? props.src : ""}
-                    alt={props.alt || ""}
+                    alt={displayAlt}
                     fill
                     className="object-cover"
                   />
                 </span>
-                {props.title && (
+                {displayTitle && (
                   <figcaption className="mt-3 text-sm text-silver text-center italic">
-                    {props.title}
+                    {displayTitle}
                   </figcaption>
                 )}
               </figure>
