@@ -128,6 +128,19 @@ export async function getFeaturedPosts(limit = 3) {
   return attachTags(posts || [], tagMap);
 }
 
+export async function getMostReadPosts(limit = 3) {
+  const supabase = await createClient();
+  const { data: posts } = await supabase
+    .from("posts")
+    .select("*")
+    .or(PUBLIC_POST_FILTER)
+    .order("view_count", { ascending: false })
+    .limit(limit);
+
+  const tagMap = await getTagsForPosts((posts || []).map((p) => p.id));
+  return attachTags(posts || [], tagMap);
+}
+
 export async function getAllTags() {
   const supabase = await createClient();
   const { data } = await supabase
@@ -145,5 +158,24 @@ export async function getApprovedComments(postId: string) {
     .eq("post_id", postId)
     .eq("status", "approved")
     .order("created_at", { ascending: true });
+  return data || [];
+}
+
+export async function getLatestApprovedComments(limit = 5) {
+  const supabase = await createClient();
+  // We need to fetch the related post slug to create links to the comment
+  const { data } = await supabase
+    .from("comments")
+    .select(`
+      id,
+      author_name,
+      content,
+      created_at,
+      post:posts(slug, title_fa, title_en)
+    `)
+    .eq("status", "approved")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
   return data || [];
 }

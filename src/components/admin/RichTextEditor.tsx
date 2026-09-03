@@ -73,7 +73,10 @@ export default function RichTextEditor({
     }
 
     if (url && editor) {
-      editor.chain().focus().setImage({ src: url }).run();
+      const alt = prompt("متن جایگزین (Alt) تصویر را وارد کنید (اختیاری):");
+      const title = prompt("کپشن تصویر را وارد کنید (اختیاری):");
+
+      editor.chain().focus().setImage({ src: url, alt: alt || "", title: title || "" }).run();
     }
   };
 
@@ -100,9 +103,9 @@ export default function RichTextEditor({
   );
 
   return (
-    <div className="border border-silver/50 rounded-lg overflow-hidden flex flex-col">
+    <div className="border border-silver/50 rounded-lg flex flex-col relative">
       {/* Toolbar */}
-      <div className="bg-white border-b border-silver/50 p-2 flex flex-wrap gap-1 items-center sticky top-0 z-10">
+      <div className="bg-white border-b border-silver/50 p-2 flex flex-wrap gap-1 items-center sticky top-0 z-10 rounded-t-lg shadow-sm">
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}
           isActive={editor.isActive("bold")}
@@ -245,7 +248,9 @@ export default function RichTextEditor({
       {galleryOpen && (
         <MediaGallery
           onSelect={(url) => {
-            editor?.chain().focus().setImage({ src: url }).run();
+            const alt = prompt("متن جایگزین (Alt) تصویر را وارد کنید (اختیاری):");
+            const title = prompt("کپشن تصویر را وارد کنید (اختیاری):");
+            editor?.chain().focus().setImage({ src: url, alt: alt || "", title: title || "" }).run();
             setGalleryOpen(false);
           }}
           onClose={() => setGalleryOpen(false)}
