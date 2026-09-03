@@ -7,11 +7,10 @@ export default function ImageFigure({
   node,
   updateAttributes,
   selected,
-  extension,
+  editor,
 }: ReactNodeViewProps) {
-  // Use the editor's dir to determine whether we are in the Persian or English editor
-  // ReactNodeViewProps doesn't strongly type editor, so we cast to any to access it
-  const dir = (extension as any).editor?.options?.editorProps?.attributes?.dir || "rtl";
+  // Directly access the editor instance's props to reliably check direction
+  const dir = editor?.options?.editorProps?.attributes?.dir || "rtl";
   const isEn = dir === "ltr";
 
   const handleAltChange = useCallback(

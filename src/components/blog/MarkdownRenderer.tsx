@@ -9,15 +9,21 @@ export default function MarkdownRenderer({
   content: string;
   locale?: string;
 }) {
+  let cleanContent = content;
+
+  // Ensure headings have a blank line before them (handling \r\n properly)
+  // This prevents issues where images followed by double enter still eat the heading
+  cleanContent = cleanContent.replace(/([^\r\n])\r?\n([ \t]*#{1,6}\s)/g, "$1\n\n$2");
+
   // Fix heading lines only — never touch the rest of the text,
   // so Persian ZWNJ (نیم‌فاصله) stays intact throughout the article.
-  const cleanContent = content.replace(
+  cleanContent = cleanContent.replace(
     /^(#{1,6})(.*)$/gm,
     (_match, hashes, rest) => {
       // Strip invisible chars that may surround the hashes
       const cleanRest = rest
         .replace(/^[\s ​‌‍﻿]+/, "")  // leading invisible chars
-        .replace(/[​‌‍﻿]/g, "");           // any remaining invisible chars in heading text
+        .replace(/[​‍﻿]/g, "");           // remaining invisible chars in heading text EXCEPT ZWNJ (‌ / ‌)
       return hashes + " " + cleanRest.trim();
     }
   );
