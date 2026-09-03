@@ -11,9 +11,14 @@ export default function MarkdownRenderer({
 }) {
   let cleanContent = content;
 
-  // 0. Remove Tiptap's markdown hard breaks (\ followed by newline)
-  //    and any stray backslashes right before a heading
-  cleanContent = cleanContent.replace(/\\\n/g, "\n");
+  // 0. Replace Tiptap's markdown hard breaks (\ followed by newline)
+  //    with standard Markdown hard breaks (two spaces followed by newline).
+  //    This keeps blockquotes intact when users use Shift+Enter in the editor.
+  cleanContent = cleanContent.replace(/\\\n/g, "  \n");
+
+  // 0.1 Clean up any hard breaks that ended up directly before a heading
+  //    so the heading isn't swallowed
+  cleanContent = cleanContent.replace(/  \n(?=[ \t]*#{1,6})/g, "\n\n");
 
   // 1. Separate headings that are stuck to the end of another element on the same line
   // Example: `![alt](url)### Heading` -> `![alt](url)\n\n### Heading`
