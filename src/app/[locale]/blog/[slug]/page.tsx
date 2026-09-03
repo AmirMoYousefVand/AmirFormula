@@ -96,7 +96,7 @@ export default async function PostPage({
             />
           )}
 
-          <MarkdownRenderer content={localizedContent(post, locale)} />
+          <MarkdownRenderer content={localizedContent(post, locale)} locale={locale} />
 
           <div className="mt-10 flex items-center gap-3">
             <LikeButton slug={slug} />

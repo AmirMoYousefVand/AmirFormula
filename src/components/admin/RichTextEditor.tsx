@@ -32,7 +32,38 @@ const ImageWithCaption = TiptapImage.extend({
   addAttributes() {
     return {
       ...this.parent?.(),
-      title: { default: "" },
+      altFa: {
+        default: "",
+        parseHTML: (element) => element.getAttribute("data-alt-fa") || element.getAttribute("alt"),
+        renderHTML: (attributes) => {
+          if (!attributes.altFa) return {};
+          return { "data-alt-fa": attributes.altFa, alt: attributes.altFa }; // Render standard alt for accessibility
+        },
+      },
+      titleFa: {
+        default: "",
+        parseHTML: (element) => element.getAttribute("data-title-fa") || element.getAttribute("title"),
+        renderHTML: (attributes) => {
+          if (!attributes.titleFa) return {};
+          return { "data-title-fa": attributes.titleFa, title: attributes.titleFa }; // Render standard title
+        },
+      },
+      altEn: {
+        default: "",
+        parseHTML: (element) => element.getAttribute("data-alt-en"),
+        renderHTML: (attributes) => {
+          if (!attributes.altEn) return {};
+          return { "data-alt-en": attributes.altEn };
+        },
+      },
+      titleEn: {
+        default: "",
+        parseHTML: (element) => element.getAttribute("data-title-en"),
+        renderHTML: (attributes) => {
+          if (!attributes.titleEn) return {};
+          return { "data-title-en": attributes.titleEn };
+        },
+      },
     };
   },
 
@@ -87,7 +118,7 @@ export default function RichTextEditor({
     }
 
     if (url && editor) {
-      editor.chain().focus().setImage({ src: url, alt: "", title: "" }).run();
+      editor.chain().focus().setImage({ src: url, altFa: "", titleFa: "", altEn: "", titleEn: "" } as any).run();
     }
   };
 
@@ -259,7 +290,7 @@ export default function RichTextEditor({
       {galleryOpen && (
         <MediaGallery
           onSelect={(url) => {
-            editor?.chain().focus().setImage({ src: url, alt: "", title: "" }).run();
+            editor?.chain().focus().setImage({ src: url, altFa: "", titleFa: "", altEn: "", titleEn: "" } as any).run();
             setGalleryOpen(false);
           }}
           onClose={() => setGalleryOpen(false)}
