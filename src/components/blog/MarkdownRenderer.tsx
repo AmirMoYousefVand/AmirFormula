@@ -32,7 +32,8 @@ export default function MarkdownRenderer({
 
   // 1. Separate headings that are stuck to the end of another element on the same line
   // Example: `![alt](url)### Heading` -> `![alt](url)\n\n### Heading`
-  cleanContent = cleanContent.replace(/([^\n\s\xA0​‍﻿])[\s\xA0​‍﻿]*(#{1,6})/g, "$1\n\n$2");
+  // Exclude > and # to prevent breaking headings inside blockquotes (e.g. `> ### Heading`)
+  cleanContent = cleanContent.replace(/([^\n\s\xA0​‍﻿>#])[\s\xA0​‍﻿]*(#{1,6})/g, "$1\n\n$2");
 
   // 2. Remove spaces and zero-width characters at the START of a line before a hash
   cleanContent = cleanContent.replace(/^[\s\xA0​‍﻿]+(#{1,6})/gm, "$1");
