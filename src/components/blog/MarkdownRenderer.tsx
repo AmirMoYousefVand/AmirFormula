@@ -28,29 +28,19 @@ export default function MarkdownRenderer({
         remarkPlugins={[remarkGfm]}
         components={{
           img: ({ node, ...props }) => {
-            // Determine alt and title based on current locale
-            // We use data-attributes stored by our custom Tiptap extension
-            const altFa = (props as any)["data-alt-fa"] || props.alt || "";
-            const altEn = (props as any)["data-alt-en"] || "";
-            const titleFa = (props as any)["data-title-fa"] || props.title || "";
-            const titleEn = (props as any)["data-title-en"] || "";
-
-            const displayAlt = locale === "en" && altEn ? altEn : altFa;
-            const displayTitle = locale === "en" && titleEn ? titleEn : titleFa;
-
             return (
               <figure className="my-8 flex flex-col items-center">
                 <span className="block relative w-full aspect-video max-w-4xl rounded-xl overflow-hidden shadow-md">
                   <Image
                     src={typeof props.src === "string" ? props.src : ""}
-                    alt={displayAlt}
+                    alt={props.alt || ""}
                     fill
                     className="object-cover"
                   />
                 </span>
-                {displayTitle && (
+                {props.title && (
                   <figcaption className="mt-3 text-sm text-silver text-center italic">
-                    {displayTitle}
+                    {props.title}
                   </figcaption>
                 )}
               </figure>

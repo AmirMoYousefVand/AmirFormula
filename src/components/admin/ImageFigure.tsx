@@ -7,41 +7,31 @@ export default function ImageFigure({
   node,
   updateAttributes,
   selected,
+  extension,
 }: ReactNodeViewProps) {
-  const handleAltChangeFa = useCallback(
+  // Use the editor's dir to determine whether we are in the Persian or English editor
+  // ReactNodeViewProps doesn't strongly type editor, so we cast to any to access it
+  const dir = (extension as any).editor?.options?.editorProps?.attributes?.dir || "rtl";
+  const isEn = dir === "ltr";
+
+  const handleAltChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      updateAttributes({ altFa: e.target.value });
+      updateAttributes({ alt: e.target.value });
     },
     [updateAttributes]
   );
 
-  const handleTitleChangeFa = useCallback(
+  const handleTitleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      updateAttributes({ titleFa: e.target.value });
-    },
-    [updateAttributes]
-  );
-
-  const handleAltChangeEn = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      updateAttributes({ altEn: e.target.value });
-    },
-    [updateAttributes]
-  );
-
-  const handleTitleChangeEn = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      updateAttributes({ titleEn: e.target.value });
+      updateAttributes({ title: e.target.value });
     },
     [updateAttributes]
   );
 
   const attrs = node.attrs as {
     src: string;
-    altFa?: string;
-    titleFa?: string;
-    altEn?: string;
-    titleEn?: string;
+    alt?: string;
+    title?: string;
   };
 
   return (
@@ -56,50 +46,31 @@ export default function ImageFigure({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={attrs.src}
-          alt={attrs.altFa || ""}
+          alt={attrs.alt || ""}
           className="w-full h-auto rounded-xl"
         />
       </div>
 
-      {/* Inline caption & alt editor - Persian */}
-      <div className="mt-2 space-y-1 px-1 border-r-2 border-primary pr-2">
-        <span className="text-xs font-bold text-navy mb-1 block">فارسی (FA):</span>
+      {/* Inline caption & alt editor */}
+      <div className={`mt-2 space-y-1 px-1 border-${isEn ? 'l' : 'r'}-2 border-primary ${isEn ? 'pl-2 text-left' : 'pr-2'}`}>
+        <span className="text-xs font-bold text-navy mb-1 block">
+          {isEn ? "English (EN):" : "فارسی (FA):"}
+        </span>
         <input
           type="text"
-          value={attrs.altFa || ""}
-          onChange={handleAltChangeFa}
-          placeholder="متن جایگزین (Alt text)..."
-          dir="rtl"
-          className="w-full text-xs px-3 py-1.5 rounded-lg border border-silver/30 bg-gray-50 text-body placeholder:text-silver/60 focus:outline-none focus:border-primary/50 focus:bg-white transition-colors"
+          value={attrs.alt || ""}
+          onChange={handleAltChange}
+          placeholder={isEn ? "Alt text..." : "متن جایگزین (Alt text)..."}
+          dir={dir}
+          className={`w-full text-xs px-3 py-1.5 rounded-lg border border-silver/30 bg-gray-50 text-body placeholder:text-silver/60 focus:outline-none focus:border-primary/50 focus:bg-white transition-colors ${isEn ? 'text-left' : ''}`}
         />
         <input
           type="text"
-          value={attrs.titleFa || ""}
-          onChange={handleTitleChangeFa}
-          placeholder="کپشن تصویر..."
-          dir="rtl"
-          className="w-full text-xs px-3 py-1.5 rounded-lg border border-silver/30 bg-gray-50 text-silver placeholder:text-silver/60 focus:outline-none focus:border-primary/50 focus:bg-white transition-colors italic"
-        />
-      </div>
-
-      {/* Inline caption & alt editor - English */}
-      <div className="mt-4 space-y-1 px-1 border-l-2 border-primary pl-2 text-left">
-        <span className="text-xs font-bold text-navy mb-1 block">English (EN):</span>
-        <input
-          type="text"
-          value={attrs.altEn || ""}
-          onChange={handleAltChangeEn}
-          placeholder="Alt text..."
-          dir="ltr"
-          className="w-full text-xs px-3 py-1.5 rounded-lg border border-silver/30 bg-gray-50 text-body placeholder:text-silver/60 focus:outline-none focus:border-primary/50 focus:bg-white transition-colors text-left"
-        />
-        <input
-          type="text"
-          value={attrs.titleEn || ""}
-          onChange={handleTitleChangeEn}
-          placeholder="Image caption..."
-          dir="ltr"
-          className="w-full text-xs px-3 py-1.5 rounded-lg border border-silver/30 bg-gray-50 text-silver placeholder:text-silver/60 focus:outline-none focus:border-primary/50 focus:bg-white transition-colors italic text-left"
+          value={attrs.title || ""}
+          onChange={handleTitleChange}
+          placeholder={isEn ? "Image caption..." : "کپشن تصویر..."}
+          dir={dir}
+          className={`w-full text-xs px-3 py-1.5 rounded-lg border border-silver/30 bg-gray-50 text-silver placeholder:text-silver/60 focus:outline-none focus:border-primary/50 focus:bg-white transition-colors italic ${isEn ? 'text-left' : ''}`}
         />
       </div>
     </NodeViewWrapper>
