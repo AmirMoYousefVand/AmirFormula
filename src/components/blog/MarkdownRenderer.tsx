@@ -20,6 +20,16 @@ export default function MarkdownRenderer({
   //    so the heading isn't swallowed
   cleanContent = cleanContent.replace(/  \n(?=[ \t]*#{1,6})/g, "\n\n");
 
+  // 0.5 Fix fragmented blockquotes caused by Tiptap serialization.
+  // Tiptap sometimes exports multi-line blockquotes with bold text as:
+  // >
+  // **Bold Text:**
+  // > value
+  // We need to pull the orphaned text back inside the blockquote.
+  // This regex matches `>\n` (empty blockquote line), followed by text that DOES NOT start with `>`,
+  // followed by another `>`. It stitches them all into a single continuous blockquote.
+  cleanContent = cleanContent.replace(/^>[ \t]*\n([^>].*?)\n>[ \t]*/gm, "> \n> $1\n> ");
+
   // 1. Separate headings that are stuck to the end of another element on the same line
   // Example: `![alt](url)### Heading` -> `![alt](url)\n\n### Heading`
   cleanContent = cleanContent.replace(/([^\n\s\xA0​‍﻿])[\s\xA0​‍﻿]*(#{1,6})/g, "$1\n\n$2");
