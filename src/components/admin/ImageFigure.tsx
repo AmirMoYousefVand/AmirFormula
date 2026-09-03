@@ -9,8 +9,11 @@ export default function ImageFigure({
   selected,
   editor,
 }: ReactNodeViewProps) {
-  // Directly access the editor instance's props to reliably check direction
-  const dir = editor?.options?.editorProps?.attributes?.dir || "rtl";
+  // Read 'dir' robustly: either from Tiptap's editor config, or fallback by checking the DOM container
+  const editorAttrs = editor?.options?.editorProps?.attributes as any;
+  const configDir = editorAttrs?.dir;
+  const domDir = editor?.view?.dom?.getAttribute("dir");
+  const dir = typeof configDir === "string" ? configDir : domDir || "rtl";
   const isEn = dir === "ltr";
 
   const handleAltChange = useCallback(
